@@ -1,0 +1,49 @@
+{
+  "name": "نظام الرصد الإلكتروني",
+  "short_name": "نظام الرصد",
+  "description": "نظام إدارة درجات الطلاب والشهادات - مدرسة أسماء",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
+  "orientation": "portrait",
+  "background_color": "#eef2f7",
+  "theme_color": "#1a4b7a",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "تحرير الدرجات",
+      "short_name": "الدرجات",
+      "url": "./index.html",
+      "description": "فتح صفحة تحرير الدرجات"
+    },
+    {
+      "name": "الكشف النهائي",
+      "short_name": "الكشف",
+      "url": "./index.html",
+      "description": "عرض الكشف النهائي"
+    }
+  ]
+}
