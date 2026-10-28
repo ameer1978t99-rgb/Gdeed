@@ -1161,7 +1161,7 @@ body.light-mode #summarySchoolType {
 <div class="menu-section">
   <div class="menu-section-title"><span class="icon">🎓</span><span class="label">الشهادات والبطاقات</span><span class="line"></span><span class="count">3</span></div>
   <div class="menu-grid-2" style="margin-top:0;grid-template-columns:1fr 1fr;">
-    <button class="menu-btn-2 green" onclick="showPage('page-certificate')"><span>🎓</span> شهادة نجاح</button>
+    <button class="menu-btn-2 green" onclick="showPage('page-certificate')"><span>🎓</span> شهادة نصفية</button>
     <button class="menu-btn-2 blue" onclick="showPage('page-certificate-print')" id="btn-cert-print"><span>🖨️</span> طباعة الشهادات</button>
     <button class="menu-btn-2 purple" onclick="showPage('page-special-certs')" style="grid-column:1/-1;background:linear-gradient(145deg,#6a1b9a,#4a148c);color:#ffffff;"><span>📜</span> التاسع + الثالث الثانوي</button>
   </div>
@@ -1617,7 +1617,7 @@ body.light-mode #summarySchoolType {
 
 <!-- CERTIFICATE -->
 <div class="page" id="page-certificate">
-<h3 style="color:#4a9eff;">🎓 شهادة نجاح</h3>
+<h3 style="color:#4a9eff;">🎓 شهادة نصفية</h3>
 <select id="certYear" onchange="updateCertOptions()"></select>
 <select id="certClass" onchange="updateCertOptions()">
 <option value="1">الصف الأول</option><option value="2">الصف الثاني</option>
@@ -2641,7 +2641,7 @@ function showPage(id) {
     'page-primary-reports': '📑 كشوف الفصول الأولية',
     'page-exams': '📝 الامتحانات',
 'page-exam-schedule': '📅 جدول الامتحانات',
-    'page-certificate': '🎓 شهادة نجاح',
+    'page-certificate': '🎓 شهادة نصفية',
     'page-certificate-print': '🖨️ طباعة الشهادات',
     'page-backup': '💾 النسخ الاحتياطي',
     'page-keygen': '🔐 مولّد الأكواد',
@@ -2738,7 +2738,7 @@ function bottomNavMenu() {
         { icon: '📋', label: 'الكشف النهائي', page: 'page-final-report' },
         { icon: '📊', label: 'الخلاصة الإحصائية', page: 'page-summary' },
         { icon: '📜', label: 'التاسع + الثالث الثانوي', page: 'page-special-certs' },
-        { icon: '🎓', label: 'شهادة نجاح', page: 'page-certificate' },
+        { icon: '🎓', label: 'شهادة نصفية', page: 'page-certificate' },
         { icon: '🖨️', label: 'طباعة الشهادات', page: 'page-certificate-print' },
         { icon: '💾', label: 'النسخ الاحتياطي', page: 'page-backup' },
         { icon: '⚙️', label: 'الإعدادات', page: 'page-settings' }
@@ -5666,7 +5666,7 @@ function generateCertificate() {
                 <div>إدارة التربية والتعليم مديرية ${s.district}</div>
                 <div style="font-weight:bold;color:#1a4b7a;margin-top:2px;">${s.name} ${s.description || ''}</div>
             </div>
-            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;">${s.eagleLogo ? `<img src="${s.eagleLogo}" style="max-width:170px;max-height:85px;display:block;margin:0 auto;" />` : `<div style="font-size:52px;line-height:1;">🦅</div>`}<div style="font-size:22px;font-weight:bold;color:#1a4b7a;margin-top:8px;letter-spacing:2px;">شهادة نجاح</div></div>
+            <div style="text-align:center;display:flex;flex-direction:column;align-items:center;">${s.eagleLogo ? `<img src="${s.eagleLogo}" style="max-width:170px;max-height:85px;display:block;margin:0 auto;" />` : `<div style="font-size:52px;line-height:1;">🦅</div>`}<div style="font-size:22px;font-weight:bold;color:#1a4b7a;margin-top:8px;letter-spacing:2px;">شهادة نصفية</div></div>
             <div></div>
         </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;background:#f0f8ff;padding:10px;border-radius:8px;margin-bottom:10px;border-right:4px solid #1a4b7a;font-size:12px;">
@@ -5705,7 +5705,7 @@ if (!student) return;
 const s = appData.schoolSettings || getDefaultSettings();
 const subjects = getSubjectsForClass(student.class);
 const sl = semester === '1' ? 'الفصل الأول' : 'الفصل الثاني';
-let text = `${s.ministry}\n${s.ministryBranch}\n${s.educationOffice} - محافظة ${s.governorate} - مديرية ${s.district}\n${s.name}\n\nشهادة نجاح - ${getAcademicYearText(year)} - ${sl}\n\nالطالب/ة: ${student.name}\nالشعبة: ${student.section || DEFAULT_SECTION}\nالصف: ${getClassLabelArabic(student.class)}\n\nالمادة\tالمحصلة\tنصف العام\tالمجموع\tالتقدير\n`;
+let text = `${s.ministry}\n${s.ministryBranch}\n${s.educationOffice} - محافظة ${s.governorate} - مديرية ${s.district}\n${s.name}\n\nشهادة نصفية - ${getAcademicYearText(year)} - ${sl}\n\nالطالب/ة: ${student.name}\nالشعبة: ${student.section || DEFAULT_SECTION}\nالصف: ${getClassLabelArabic(student.class)}\n\nالمادة\tالمحصلة\tنصف العام\tالمجموع\tالتقدير\n`;
 let totalAll = 0, allPass = true;
 subjects.forEach(sub => { const e1 = getStudentGradeExam1(student.id, year, parseInt(semester), student.class, sub); const e2 = getStudentGradeExam2(student.id, year, parseInt(semester), student.class, sub); const t = e1 + e2; totalAll += t; if (t < 25) allPass = false; text += `${sub}\t${e1}\t${e2}\t${t}\t${getGradeLabel(t*2)}\n`; });
 const maxTotal = subjects.length * 50;
@@ -5720,7 +5720,7 @@ const container = document.getElementById('certificateContainer');
 if (!container || !container.innerHTML.trim()) { showToast('⚠️ الشهادة غير جاهزة'); return; }
 const win = window.open('', '_blank', 'width=900,height=800');
 if (!win) { showToast('⚠️ يرجى السماح بالنوافذ'); return; }
-win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>شهادة نجاح</title><style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; padding: 15px; direction: rtl; background: white; } .toolbar { text-align: center; margin-bottom: 15px; padding: 12px; background: #f0f8ff; border-radius: 10px; } .toolbar button { padding: 10px 25px; font-size: 15px; font-weight: bold; cursor: pointer; background: #1a4b7a; color: white; border: none; border-radius: 8px; margin: 4px; } .toolbar button.close-btn { background: #6c757d; } @media print { .toolbar { display: none !important; } body { padding: 0; } @page { size: A4 portrait; margin: 0.8cm; } }</style></head><body><div class="toolbar"><button onclick="window.print()">🖨️ طباعة</button><button class="close-btn" onclick="window.close()">❌ إغلاق</button></div><div>${container.innerHTML}</div><script>setTimeout(function() { try { window.print(); } catch(e) {} }, 800);<\/script></body></html>`);
+win.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>شهادة نصفية</title><style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; padding: 15px; direction: rtl; background: white; } .toolbar { text-align: center; margin-bottom: 15px; padding: 12px; background: #f0f8ff; border-radius: 10px; } .toolbar button { padding: 10px 25px; font-size: 15px; font-weight: bold; cursor: pointer; background: #1a4b7a; color: white; border: none; border-radius: 8px; margin: 4px; } .toolbar button.close-btn { background: #6c757d; } @media print { .toolbar { display: none !important; } body { padding: 0; } @page { size: A4 portrait; margin: 0.8cm; } }</style></head><body><div class="toolbar"><button onclick="window.print()">🖨️ طباعة</button><button class="close-btn" onclick="window.close()">❌ إغلاق</button></div><div>${container.innerHTML}</div><script>setTimeout(function() { try { window.print(); } catch(e) {} }, 800);<\/script></body></html>`);
 win.document.close();
 setTimeout(() => { try { win.focus(); } catch(e) {} }, 100);
 showToast('🖨️ جاري الطباعة');
@@ -6506,7 +6506,7 @@ function buildSuccessCertSlot(st, s, classLabel, semesterLabel, yearText, year, 
         <div class="cert-title-wrap">
             <div class="cert-title">
                 <span class="cert-star">✦</span>
-                شهادة نجاح
+                شهادة نصفية
                 <span class="cert-star">✦</span>
             </div>
             <div class="cert-title-line"></div>
