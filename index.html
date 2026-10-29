@@ -9999,50 +9999,55 @@ function printAttendanceList() {
   const halls = [...new Set(dist.map(d => d.hallName))];
   
   let html = '<html dir="rtl"><head><meta charset="UTF-8"><style>';
-  html += 'body{font-family: Arial, Tahoma, sans-serif; font-weight: bold; margin:0; padding:10px;}';
-  // إعداد الصفحة لتكون صفحة كاملة وتقطع تلقائياً
-  html += '.page{page-break-after:always; width: 100%; display: flex; flex-direction: column; min-height: 95vh;}';
-  html += 'table{width:100%;border-collapse:collapse;text-align:center;table-layout:fixed;}';
-  html += 'td{border:1.5px solid #000; padding:8px 4px; font-size:15px; font-weight:bold; color:#000;}';
-  html += '@media print{@page{size:A4 landscape;margin:0.5cm;} *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}}';
+  html += 'body{font-family: Arial, Tahoma, sans-serif; font-weight: bold; margin:0; padding:0; background: #fff;}';
+  
+  // إعداد الصفحة بدقة لتكون ورقة A4 كاملة
+  html += '.page{ width: 297mm; height: 210mm; box-sizing: border-box; padding: 10mm; position: relative; page-break-after: always; page-break-inside: avoid; overflow: hidden; }';
+  html += '.page:last-child { page-break-after: auto; }';
+  
+  // إعداد الجدول
+  html += 'table{width:100%; border-collapse:collapse; text-align:center; table-layout:fixed; margin-bottom: 20px;}';
+  html += 'td{border:1px solid #000; padding:4px 2px; font-size:13px; font-weight:bold; color:#000;}'; // تقليل الحشوة لاستيعاب 22 طالباً
+  
+  // إعداد التوقيعات لتكون مثبتة في الأسفل تماماً
+  html += '.signatures { position: absolute; bottom: 15mm; left: 10mm; right: 10mm; display: flex; justify-content: space-between; font-weight:bold; font-size:14px; }';
+  
+  html += '@media print{ @page{ size: A4 landscape; margin: 0; } *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;} }';
   html += '</style></head><body>';
   
-  // الحد الأقصى لعدد الطلاب في الصفحة الواحدة
-  const CHUNK_SIZE = 20;
+  // عدد الطلاب في الصفحة (22 طالباً لترك مساحة للتوقيعات والترويسة)
+  const CHUNK_SIZE = 22;
   
   halls.forEach(hallName => {
     const hallStudents = dist.filter(d => d.hallName === hallName);
     
-    // تقسيم طلاب القاعة إلى مجموعات (كل مجموعة 25 طالب)
+    // تقسيم الطلاب لصفحات
     for (let i = 0; i < hallStudents.length; i += CHUNK_SIZE) {
       const chunk = hallStudents.slice(i, i + CHUNK_SIZE);
       
-      // بداية صفحة جديدة
       html += `<div class="page">`;
       
-      // 1. الترويسة
+      // الترويسة
       html += getPrintHeader('كشف تحضير الطلاب', hallName);
-      html += '<div style="text-align:center;margin-bottom:10px;font-weight:bold;font-size:15px;">المادة: .................................. | اليوم: .................. | التاريخ: ..................</div>';
+      html += '<div style="text-align:center;margin-bottom:10px;font-weight:bold;font-size:14px;">المادة: .................................. | اليوم: .................. | التاريخ: ..................</div>';
       
-      // 2. الجدول
+      // الجدول
       html += '<table><thead><tr>';
-      html += '<th style="width:6%; background-color:#1e7e34 !important; color:#ffffff !important; border:1.5px solid #000; padding:8px; font-size:14px; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">م</th>';
-      html += '<th style="width:14%; background-color:#1e7e34 !important; color:#ffffff !important; border:1.5px solid #000; padding:8px; font-size:14px; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">رقم الجلوس</th>';
-      html += '<th style="width:35%; background-color:#1e7e34 !important; color:#ffffff !important; border:1.5px solid #000; padding:8px; font-size:14px; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">اسم الطالب</th>';
-      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1.5px solid #000; padding:8px; font-size:14px; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">الصف</th>';
-      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1.5px solid #000; padding:8px; font-size:14px; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">حاضر</th>';
-      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1.5px solid #000; padding:8px; font-size:14px; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">غائب</th>';
-      html += '<th style="width:15%; background-color:#1e7e34 !important; color:#ffffff !important; border:1.5px solid #000; padding:8px; font-size:14px; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;">ملاحظات</th>';
+      html += '<th style="width:6%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">م</th>';
+      html += '<th style="width:14%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">رقم الجلوس</th>';
+      html += '<th style="width:35%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">اسم الطالب</th>';
+      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">الصف</th>';
+      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">حاضر</th>';
+      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">غائب</th>';
+      html += '<th style="width:15%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">ملاحظات</th>';
       html += '</tr></thead><tbody>';
       
-      // إضافة الطلاب لهذه الصفحة فقط
       chunk.forEach((item, idx) => {
-        // الترقيم المتسلسل (i + idx + 1) لضمان استمرار الأرقام بين الصفحات
         const rowNum = i + idx + 1;
         html += `<tr>
           <td>${rowNum}</td>
           <td>${item.seatNumber}</td>
-          <td style="text-align:right; font-weight:bold; font-size:16px;">${item.student.name}</td>
+          <td style="text-align:right; font-size:14px;">${item.student.name}</td>
           <td>${item.student.class}</td>
           <td></td>
           <td></td>
@@ -10052,13 +10057,13 @@ function printAttendanceList() {
       
       html += '</tbody></table>';
       
-      // 3. التوقيعات (يتم دفعها لأسفل الصفحة باستخدام margin-top: auto)
-      html += `<div style="margin-top:auto; padding-top:20px; display:flex; justify-content:space-between; font-weight:bold; font-size:15px;">
+      // التوقيعات مثبتة في الأسفل
+      html += `<div class="signatures">
                 <div>توقيع الكنترول: ................</div>
                 <div>مدير المدرسة: ................</div>
                </div>`;
       
-      html += `</div>`; // نهاية الصفحة
+      html += `</div>`;
     }
   });
   
