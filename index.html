@@ -10397,8 +10397,8 @@ function confirmPrintAbsenceDate() {
       <td>${idx+1}</td>
       <td>${a.seatNumber}</td>
       <td style="text-align:right;font-weight:bold;">${a.studentName}</td>
-      <td>${a.studentClass}</td>
-      <td>${a.hallName}</td>
+      <td>${getOrdinal(parseInt(a.studentClass))}</td>
+      <td>${String(a.hallName || '').replace(/^(ال)?قاعة\s*[:\-–—/]?\s*/i, '').trim() || a.hallName}</td>
       <td>${subjectName}</td>
       <td></td>
       <td></td>
