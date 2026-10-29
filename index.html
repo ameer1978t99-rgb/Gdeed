@@ -10000,23 +10000,31 @@ function printAttendanceList() {
   
   let html = '<html dir="rtl"><head><meta charset="UTF-8"><style>';
   html += '* { margin:0; padding:0; box-sizing:border-box; }';
-  html += 'body { font-family: Arial, Tahoma, sans-serif; font-weight: bold; padding: 6px; direction: rtl; background: white; }';
+  html += 'body { font-family: Arial, Tahoma, sans-serif; font-weight: bold; background: #fff; padding: 5px; }';
   
-  // ✅ استخدام نفس هيكل الكشف النهائي الذي يعمل بنجاح
-  html += '.page { page-break-after: always; page-break-inside: avoid; display: block; }';
-  html += '.page:last-child { page-break-after: auto; }';
+  // ✅ هيكل الكشف النهائي (بدون أطوال ثابتة، وبدون flex)
+  html += '.report-page { page-break-after: always; page-break-inside: avoid; display: block; }';
+  html += '.report-page:last-child { page-break-after: auto; }';
   
-  html += 'table { width: 100%; border-collapse: collapse; font-size: 12px; border: 1.5px solid #000; table-layout: fixed; margin-top: 5px; }';
-  html += 'th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; font-size: 12px; font-weight: bold; color: #000; }';
-  html += 'th { background: #1e7e34 !important; color: #fff !important; }';
+  // حاوية الجدول مع تصغير بسيط (نفس حيلة الكشف النهائي)
+  html += '.table-wrapper { transform: scale(0.95); transform-origin: top right; width: 105.2%; margin-bottom: 5px; }';
   
-  // التوقيعات تتدفق طبيعياً أسفل الجدول
+  html += 'table { width: 100%; border-collapse: collapse; border: 2px solid #000; table-layout: auto; }';
+  html += 'th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; font-size: 12px; font-weight: bold; height: 20px; }';
+  html += 'th { background: #1e7e34 !important; color: white !important; font-size: 13px; }';
+  
+  // التوقيعات (ستأتي طبيعياً بعد الجدول)
   html += '.signatures { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-top: 15px; padding: 0 10px; }';
+  
+  // ترويسة مضغوطة
+  html += '.header-box { text-align: center; margin-bottom: 8px; border-bottom: 1.5px solid #1a4b7a; padding-bottom: 5px; }';
+  html += '.header-box .logo { height: 50px; }';
+  html += '.header-box .title { font-size: 15px; border: 1.5px solid #000; padding: 4px; background: #f0f8ff; margin-top: 5px; }';
   
   html += '@media print { @page { size: A4 landscape; margin: 0.5cm; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }';
   html += '</style></head><body>';
   
-  // ✅ العدد المطلوب: 25 طالب في الصفحة
+  // ✅ 25 طالب في الصفحة
   const CHUNK_SIZE = 25;
   
   halls.forEach(hallName => {
@@ -10025,19 +10033,20 @@ function printAttendanceList() {
     for (let i = 0; i < hallStudents.length; i += CHUNK_SIZE) {
       const chunk = hallStudents.slice(i, i + CHUNK_SIZE);
       
-      html += `<div class="page">`;
+      html += `<div class="report-page">`;
       
-      // الترويسة (تم تصغير الشعار قليلاً لمنع تداخل النصوص)
-      html += `<div style="text-align:center;margin-bottom:10px;">
-                 <div style="font-family:'Traditional Arabic',serif;font-size:16px;font-weight:bold;color:#1a4b7a;">بسم الله الرحمن الرحيم</div>
-                 <div style="max-height:60px; overflow:hidden; display:inline-block;">${getEagleLogo(90)}</div>
-                 <div style="font-weight:bold;font-size:14px;margin-top:2px;">${(appData.schoolSettings||{}).name || ''}</div>
-                 <div style="font-weight:bold;font-size:15px;margin-top:5px;border:1.5px solid #000;padding:4px;background:#f0f8ff;">كشف تحضير الطلاب - ${hallName}</div>
+      // الترويسة
+      html += `<div class="header-box">
+                 <div style="font-family:'Traditional Arabic',serif;font-size:14px;color:#1a4b7a;">بسم الله الرحمن الرحيم</div>
+                 <div class="logo">${getEagleLogo(80)}</div>
+                 <div style="font-size:13px;">${(appData.schoolSettings||{}).name || ''}</div>
+                 <div class="title">كشف تحضير الطلاب - ${hallName}</div>
                </div>`;
       
-      html += '<div style="text-align:center;margin-bottom:5px;font-weight:bold;font-size:13px;">المادة: .................................. | اليوم: .................. | التاريخ: ..................</div>';
+      html += '<div style="text-align:center; margin-bottom:5px; font-size:13px;">المادة: .................... | اليوم: .................... | التاريخ: ....................</div>';
       
-      html += '<table><thead><tr>';
+      // الجدول
+      html += '<div class="table-wrapper"><table><thead><tr>';
       html += '<th style="width:6%;">م</th>';
       html += '<th style="width:14%;">رقم الجلوس</th>';
       html += '<th style="width:35%;">اسم الطالب</th>';
@@ -10052,7 +10061,7 @@ function printAttendanceList() {
         html += `<tr>
           <td>${rowNum}</td>
           <td>${item.seatNumber}</td>
-          <td style="text-align:right; padding-right:6px; font-size:13px;">${item.student.name}</td>
+          <td style="text-align:right; padding-right:6px; white-space:nowrap;">${item.student.name}</td>
           <td>${item.student.class}</td>
           <td></td>
           <td></td>
@@ -10060,7 +10069,7 @@ function printAttendanceList() {
         </tr>`;
       });
       
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
       
       // التوقيعات
       html += `<div class="signatures">
