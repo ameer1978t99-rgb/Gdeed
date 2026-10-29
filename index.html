@@ -10105,31 +10105,94 @@ ${pagesHtml}
 function printCallList() {
   const dist = window._currentDistribution;
   document.getElementById('hallPrintModal').classList.remove('show');
-  const halls = [...new Set(dist.map(d => d.hallName))];
   
-  let html = '<html dir="rtl"><head><meta charset="UTF-8"><style>';
-  html += 'body{font-family:"Cairo",sans-serif;font-weight:bold;}'; // إضافة الخط الغامق
-  html += '.page{padding:15px;page-break-after:always;}';
-  html += 'table{width:100%;border-collapse:collapse;text-align:center;}';
-  html += 'th,td{border:1px solid #000;padding:6px;font-size:12px;font-weight:bold;}'; // إضافة الخط الغامق
-  html += 'th{background:#1a4b7a;color:#fff;}';
-  html += '@media print{@page{size:A4 portrait;margin:1cm;} *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}}'; // إجبار طباعة الألوان
-  html += '</style></head><body>';
+  if (!dist || !dist.length) { showToast('⚠️ لا توجد بيانات للطباعة', true); return; }
+  
+  const halls = [...new Set(dist.map(d => d.hallName))];
+  const CHUNK_SIZE = 25; // ← 25 طالب لكل صفحة
+  const s = appData.schoolSettings || getDefaultSettings();
+  const yearEl = document.getElementById('examsYearSelect');
+  const year = yearEl ? yearEl.value : (appData.years[appData.years.length - 1] || '2025');
+  const semesterLabel = currentExamSemester === '1' ? 'الأول' : 'الثاني';
+  
+  let allPagesHtml = '';
   
   halls.forEach(hallName => {
     const hallStudents = dist.filter(d => d.hallName === hallName);
-    html += `<div class="page">${getPrintHeader('كشف مناداة الطلاب', hallName)}`;
-    html += '<table><thead><tr><th>م</th><th>رقم الجلوس</th><th>اسم الطالب</th><th>الصف</th><th>التوقيع</th></tr></thead><tbody>';
-    hallStudents.forEach((item, idx) => {
-      html += `<tr><td>${idx+1}</td><td>${item.seatNumber}</td><td style="text-align:right">${item.student.name}</td><td>${item.student.class}</td><td></td></tr>`;
-    });
-    html += '</tbody></table><div style="margin-top:30px;display:flex;justify-content:space-between;font-weight:bold;"><div>توقيع الكنترول: ................</div><div>مدير المدرسة: ................</div></div></div>';
+    if (!hallStudents.length) return;
+    
+    const totalPagesInHall = Math.ceil(hallStudents.length / CHUNK_SIZE);
+    
+    for (let i = 0; i < hallStudents.length; i += CHUNK_SIZE) {
+      const chunk = hallStudents.slice(i, i + CHUNK_SIZE);
+      const pageNum = Math.floor(i / CHUNK_SIZE) + 1;
+      
+      // بناء صفوف الطلاب
+      let rowsHtml = '';
+      chunk.forEach((item, idx) => {
+        const globalNum = i + idx + 1;
+        rowsHtml += `<tr>
+          <td style="text-align:center;font-weight:bold;">${globalNum}</td>
+          <td style="text-align:center;font-weight:bold;color:#b33636;font-size:13px;">${item.seatNumber}</td>
+          <td style="text-align:right;padding-right:3mm;font-weight:bold;">${item.student.name}</td>
+          <td style="text-align:center;">${item.student.class}</td>
+          <td></td>
+        </tr>`;
+      });
+      
+      // صفوف فارغة لتثبيت ارتفاع ثابت = 25 صف دائمًا
+      const emptyRows = CHUNK_SIZE - chunk.length;
+      for (let r = 0; r < emptyRows; r++) {
+        rowsHtml += `<tr><td></td><td></td><td></td><td></td><td></td></tr>`;
+      }
+      
+      allPagesHtml += `
+        <div class="page">
+          <div class="page-content">
+            <div class="doc-header">
+              <div class="hdr-side hdr-right">
+                <div>الجمهورية اليمنية</div>
+                <div>وزارة التربية والتعليم</div>
+                <div>${s.educationOffice || 'مكتب التربية والتعليم'}</div>
+                <div>إدارة التربية / ${s.district || ''}</div>
+                <div style="color:#1a4b7a;">${s.name || ''}</div>
+              </div>
+              <div class="hdr-center">
+                <div class="basmala">بسم الله الرحمن الرحيم</div>
+                <div class="logo-wrap">${getEagleLogo(60)}</div>
+                <div class="main-title">كشف مناداة الطلاب</div>
+                <div class="hall-title">${hallName} &nbsp;—&nbsp; صفحة ${pageNum} من ${totalPagesInHall}</div>
+              </div>
+              <div class="hdr-side hdr-left">
+                <div>الفصل: ${semesterLabel}</div>
+                <div>العام: ${year}/${parseInt(year)+1}</div>
+                <div>التاريخ: ${new Date().toLocaleDateString('ar-EG')}</div>
+                <div>عدد الطلاب: ${chunk.length}</div>
+              </div>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:8%;">م</th>
+                  <th style="width:15%;">رقم الجلوس</th>
+                  <th style="width:52%;">اسم الطالب</th>
+                  <th style="width:10%;">الصف</th>
+                  <th style="width:15%;">التوقيع</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+          <div class="signatures">
+            <div class="sig-item"><div class="sig-label">توقيع رئيس الكنترول</div><div class="sig-line"></div></div>
+            <div class="sig-item"><div class="sig-label">توقيع الملاحظ</div><div class="sig-line"></div></div>
+            <div class="sig-item"><div class="sig-label">مدير المدرسة</div><div class="sig-line"></div></div>
+          </div>
+        </div>`;
+    }
   });
   
-  html += '<script>window.onload=function(){window.print();}<\/script></body></html>';
-  const win = window.open('', '_blank');
-  win.document.write(html);
-  win.document.close();
+  executeHallPrint(allPagesHtml, 'كشف مناداة الطلاب');
 }
 
 function printAttendanceList() {
