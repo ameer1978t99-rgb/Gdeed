@@ -9999,23 +9999,28 @@ function printAttendanceList() {
   const halls = [...new Set(dist.map(d => d.hallName))];
   
   let html = '<html dir="rtl"><head><meta charset="UTF-8"><style>';
-  html += 'body{font-family:"Cairo",sans-serif;font-weight:bold;}'; // خط غامق لكل الصفحة
-  html += '.page{padding:15px;page-break-after:always;}';
-  html += 'table{width:100%;border-collapse:collapse;text-align:center;}';
-  html += 'th,td{border:1px solid #000;padding:6px;font-size:12px;font-weight:bold;}'; // خط غامق للخلايا
-  html += 'th{background:#1e7e34 !important;color:#fff !important;}'; // إضافة !important لضمان بقاء اللون
-  html += '@media print{@page{size:A4 landscape;margin:1cm;} *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}}'; // إجبار المتصفح على طباعة الألوان
+  html += 'body{font-family:"Cairo", "Tajawal", Tahoma, sans-serif;font-weight:900 !important;margin:0;padding:10px;}';
+  html += '.page{page-break-after:always; width: 100%;}';
+  // إجبار الجدول على أخذ عرض الشاشة وتوزيع الأعمدة بالتساوي
+  html += 'table{width:100%;border-collapse:collapse;text-align:center;table-layout:fixed;}';
+  html += 'th,td{border:1.5px solid #000;padding:8px 4px;font-size:14px;font-weight:900 !important;word-wrap:break-word;}';
+  // إجبار المتصفح على طباعة اللون الأخضر للخلفية والنص الأبيض
+  html += 'th{background-color:#1e7e34 !important;color:#ffffff !important;-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}';
+  html += '@media print{@page{size:A4 landscape;margin:0.5cm;} *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}}';
   html += '</style></head><body>';
   
   halls.forEach(hallName => {
     const hallStudents = dist.filter(d => d.hallName === hallName);
     html += `<div class="page">${getPrintHeader('كشف تحضير الطلاب', hallName)}`;
-    html += '<div style="text-align:center;margin-bottom:10px;font-weight:bold;">المادة: .................................. | اليوم: .................. | التاريخ: ..................</div>';
-    html += '<table><thead><tr><th>م</th><th>رقم الجلوس</th><th>اسم الطالب</th><th>الصف</th><th>حاضر</th><th>غائب</th><th>ملاحظات</th></tr></thead><tbody>';
+    html += '<div style="text-align:center;margin-bottom:10px;font-weight:900 !important;font-size:14px;">المادة: .................................. | اليوم: .................. | التاريخ: ..................</div>';
+    
+    // تحديد عرض كل عمود بدقة (نسبة مئوية) لكي لا تنقطع الكلمات
+    html += '<table><thead><tr><th style="width:5%;">م</th><th style="width:15%;">رقم الجلوس</th><th style="width:35%;">اسم الطالب</th><th style="width:10%;">الصف</th><th style="width:10%;">حاضر</th><th style="width:10%;">غائب</th><th style="width:15%;">ملاحظات</th></tr></thead><tbody>';
+    
     hallStudents.forEach((item, idx) => {
-      html += `<tr><td>${idx+1}</td><td>${item.seatNumber}</td><td style="text-align:right">${item.student.name}</td><td>${item.student.class}</td><td></td><td></td><td></td></tr>`;
+      html += `<tr><td>${idx+1}</td><td>${item.seatNumber}</td><td style="text-align:right;font-weight:900 !important;">${item.student.name}</td><td>${item.student.class}</td><td></td><td></td><td></td></tr>`;
     });
-    html += '</tbody></table><div style="margin-top:30px;display:flex;justify-content:space-between;font-weight:bold;"><div>توقيع الكنترول: ................</div><div>مدير المدرسة: ................</div></div></div>';
+    html += '</tbody></table><div style="margin-top:30px;display:flex;justify-content:space-between;font-weight:900 !important;font-size:14px;"><div>توقيع الكنترول: ................</div><div>مدير المدرسة: ................</div></div></div>';
   });
   
   html += '<script>window.onload=function(){window.print();}<\/script></body></html>';
