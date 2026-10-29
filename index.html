@@ -10008,7 +10008,7 @@ function printAttendanceList() {
   html += '</style></head><body>';
   
   // الحد الأقصى لعدد الطلاب في الصفحة الواحدة
-  const CHUNK_SIZE = 25;
+  const CHUNK_SIZE = 20;
   
   halls.forEach(hallName => {
     const hallStudents = dist.filter(d => d.hallName === hallName);
