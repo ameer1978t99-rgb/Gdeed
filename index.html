@@ -10135,7 +10135,7 @@ function printCallList() {
           <td style="text-align:center;font-weight:bold;">${globalNum}</td>
           <td style="text-align:center;font-weight:bold;color:#b33636;font-size:13px;">${item.seatNumber}</td>
           <td style="text-align:right;padding-right:3mm;font-weight:bold;">${item.student.name}</td>
-          <td style="text-align:center;">${item.student.class}</td>
+          <td style="text-align:center;">${getOrdinal(parseInt(item.student.class))}</td>
           <td></td>
         </tr>`;
       });
@@ -10161,7 +10161,7 @@ function printCallList() {
                 <div class="basmala">بسم الله الرحمن الرحيم</div>
                 <div class="logo-wrap">${getEagleLogo(60)}</div>
                 <div class="main-title">كشف مناداة الطلاب</div>
-                <div class="hall-title">${hallName} &nbsp;—&nbsp; صفحة ${pageNum} من ${totalPagesInHall}</div>
+                <div class="hall-title">القاعة: ${hallName} &nbsp;—&nbsp; صفحة ${pageNum} من ${totalPagesInHall}</div>
               </div>
               <div class="hdr-side hdr-left">
                 <div>الفصل: ${semesterLabel}</div>
