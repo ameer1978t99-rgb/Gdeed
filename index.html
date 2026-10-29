@@ -10199,7 +10199,10 @@ function printAttendanceList() {
   const dist = window._currentDistribution;
   document.getElementById('hallPrintModal').classList.remove('show');
   
-  if (!dist || !dist.length) { showToast('⚠️ لا توجد بيانات للطباعة', true); return; }
+  if (!dist || !dist.length) {
+    alert('⚠️ لا توجد بيانات — اضغط على زر الطباعة 🖨️ من صفحة القاعات أولاً');
+    return;
+  }
   
   const halls = [...new Set(dist.map(d => d.hallName))];
   const CHUNK_SIZE = 25;
@@ -10223,67 +10226,63 @@ function printAttendanceList() {
       let rowsHtml = '';
       chunk.forEach((item, idx) => {
         const globalNum = i + idx + 1;
-        rowsHtml += `<tr>
-          <td style="text-align:center;font-weight:bold;">${globalNum}</td>
-          <td style="text-align:center;font-weight:bold;color:#b33636;font-size:13px;">${item.seatNumber}</td>
-          <td style="text-align:right;padding-right:3mm;font-weight:bold;">${item.student.name}</td>
-          <td style="text-align:center;">${item.student.class}</td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>`;
+        rowsHtml += '<tr>' +
+          '<td style="text-align:center;font-weight:bold;">' + globalNum + '</td>' +
+          '<td style="text-align:center;font-weight:bold;color:#b33636;font-size:13px;">' + item.seatNumber + '</td>' +
+          '<td style="text-align:right;padding-right:3mm;font-weight:bold;">' + item.student.name + '</td>' +
+          '<td style="text-align:center;">' + getOrdinal(parseInt(item.student.class)) + '</td>' +
+          '<td></td><td></td><td></td>' +
+          '</tr>';
       });
       
       const emptyRows = CHUNK_SIZE - chunk.length;
       for (let r = 0; r < emptyRows; r++) {
-        rowsHtml += `<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        rowsHtml += '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
       }
       
-      allPagesHtml += `
-        <div class="page">
-          <div class="page-content">
-            <div class="doc-header">
-              <div class="hdr-side hdr-right">
-                <div>الجمهورية اليمنية</div>
-                <div>وزارة التربية والتعليم</div>
-                <div>${s.educationOffice || 'مكتب التربية والتعليم'}</div>
-                <div>إدارة التربية / ${s.district || ''}</div>
-                <div style="color:#1a4b7a;">${s.name || ''}</div>
-              </div>
-              <div class="hdr-center">
-                <div class="basmala">بسم الله الرحمن الرحيم</div>
-                <div class="logo-wrap">${getEagleLogo(60)}</div>
-                <div class="main-title">كشف تحضير الطلاب</div>
-                <div class="hall-title">${hallName} &nbsp;—&nbsp; صفحة ${pageNum} من ${totalPagesInHall}</div>
-              </div>
-              <div class="hdr-side hdr-left">
-                <div>الفصل: ${semesterLabel}</div>
-                <div>العام: ${year}/${parseInt(year)+1}</div>
-                <div>المادة: ....................</div>
-                <div>التاريخ: ....................</div>
-              </div>
-            </div>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th style="width:6%;">م</th>
-                  <th style="width:12%;">رقم الجلوس</th>
-                  <th style="width:38%;">اسم الطالب</th>
-                  <th style="width:8%;">الصف</th>
-                  <th style="width:10%;">حاضر</th>
-                  <th style="width:10%;">غائب</th>
-                  <th style="width:16%;">ملاحظات</th>
-                </tr>
-              </thead>
-              <tbody>${rowsHtml}</tbody>
-            </table>
-          </div>
-          <div class="signatures">
-            <div class="sig-item"><div class="sig-label">توقيع رئيس الكنترول</div><div class="sig-line"></div></div>
-            <div class="sig-item"><div class="sig-label">توقيع الملاحظ</div><div class="sig-line"></div></div>
-            <div class="sig-item"><div class="sig-label">مدير المدرسة</div><div class="sig-line"></div></div>
-          </div>
-        </div>`;
+      allPagesHtml +=
+        '<div class="page">' +
+        '<div class="page-content">' +
+        '<div class="doc-header">' +
+        '<div class="hdr-side hdr-right">' +
+        '<div>الجمهورية اليمنية</div>' +
+        '<div>وزارة التربية والتعليم</div>' +
+        '<div>' + (s.educationOffice || 'مكتب التربية والتعليم') + '</div>' +
+        '<div>إدارة التربية / ' + (s.district || '') + '</div>' +
+        '<div style="color:#1a4b7a;">' + (s.name || '') + '</div>' +
+        '</div>' +
+        '<div class="hdr-center">' +
+        '<div class="basmala">بسم الله الرحمن الرحيم</div>' +
+        '<div class="logo-wrap">' + getEagleLogo(60) + '</div>' +
+        '<div class="main-title">كشف تحضير الطلاب</div>' +
+        '<div class="hall-title">القاعة: ' + hallName + ' — صفحة ' + pageNum + ' من ' + totalPagesInHall + '</div>' + totalPagesInHall + '</div>' +
+        '</div>' +
+        '<div class="hdr-side hdr-left">' +
+        '<div>الفصل: ' + semesterLabel + '</div>' +
+        '<div>العام: ' + year + '/' + (parseInt(year) + 1) + '</div>' +
+        '<div>المادة: ....................</div>' +
+        '<div>التاريخ: ....................</div>' +
+        '</div>' +
+        '</div>' +
+        '<table class="data-table">' +
+        '<thead><tr>' +
+        '<th style="width:6%;">م</th>' +
+        '<th style="width:12%;">رقم الجلوس</th>' +
+        '<th style="width:38%;">اسم الطالب</th>' +
+        '<th style="width:8%;">الصف</th>' +
+        '<th style="width:10%;">حاضر</th>' +
+        '<th style="width:10%;">غائب</th>' +
+        '<th style="width:16%;">ملاحظات</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+        '</table>' +
+        '</div>' +
+        '<div class="signatures">' +
+        '<div class="sig-item"><div class="sig-label">توقيع رئيس الكنترول</div><div class="sig-line"></div></div>' +
+        '<div class="sig-item"><div class="sig-label">توقيع الملاحظ</div><div class="sig-line"></div></div>' +
+        '<div class="sig-item"><div class="sig-label">مدير المدرسة</div><div class="sig-line"></div></div>' +
+        '</div>' +
+        '</div>';
     }
   });
   
