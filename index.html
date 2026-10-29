@@ -9999,47 +9999,52 @@ function printAttendanceList() {
   const halls = [...new Set(dist.map(d => d.hallName))];
   
   let html = '<html dir="rtl"><head><meta charset="UTF-8"><style>';
-  html += 'body{font-family: Arial, Tahoma, sans-serif; font-weight: bold; margin:0; padding:0; background: #fff;}';
+  html += '* { margin:0; padding:0; box-sizing:border-box; }';
+  html += 'body { font-family: Arial, Tahoma, sans-serif; font-weight: bold; padding: 6px; direction: rtl; background: white; }';
   
-  // إعداد الصفحة بدقة لتكون ورقة A4 كاملة
-  html += '.page{ width: 297mm; height: 210mm; box-sizing: border-box; padding: 10mm; position: relative; page-break-after: always; page-break-inside: avoid; overflow: hidden; }';
+  // ✅ استخدام نفس هيكل الكشف النهائي الذي يعمل بنجاح
+  html += '.page { page-break-after: always; page-break-inside: avoid; display: block; }';
   html += '.page:last-child { page-break-after: auto; }';
   
-  // إعداد الجدول
-  html += 'table{width:100%; border-collapse:collapse; text-align:center; table-layout:fixed; margin-bottom: 20px;}';
-  html += 'td{border:1px solid #000; padding:4px 2px; font-size:13px; font-weight:bold; color:#000;}'; // تقليل الحشوة لاستيعاب 22 طالباً
+  html += 'table { width: 100%; border-collapse: collapse; font-size: 12px; border: 1.5px solid #000; table-layout: fixed; margin-top: 5px; }';
+  html += 'th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; font-size: 12px; font-weight: bold; color: #000; }';
+  html += 'th { background: #1e7e34 !important; color: #fff !important; }';
   
-  // إعداد التوقيعات لتكون مثبتة في الأسفل تماماً
-  html += '.signatures { position: absolute; bottom: 15mm; left: 10mm; right: 10mm; display: flex; justify-content: space-between; font-weight:bold; font-size:14px; }';
+  // التوقيعات تتدفق طبيعياً أسفل الجدول
+  html += '.signatures { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; margin-top: 15px; padding: 0 10px; }';
   
-  html += '@media print{ @page{ size: A4 landscape; margin: 0; } *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;} }';
+  html += '@media print { @page { size: A4 landscape; margin: 0.5cm; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }';
   html += '</style></head><body>';
   
-  // عدد الطلاب في الصفحة (22 طالباً لترك مساحة للتوقيعات والترويسة)
-  const CHUNK_SIZE = 22;
+  // ✅ العدد المطلوب: 25 طالب في الصفحة
+  const CHUNK_SIZE = 25;
   
   halls.forEach(hallName => {
     const hallStudents = dist.filter(d => d.hallName === hallName);
     
-    // تقسيم الطلاب لصفحات
     for (let i = 0; i < hallStudents.length; i += CHUNK_SIZE) {
       const chunk = hallStudents.slice(i, i + CHUNK_SIZE);
       
       html += `<div class="page">`;
       
-      // الترويسة
-      html += getPrintHeader('كشف تحضير الطلاب', hallName);
-      html += '<div style="text-align:center;margin-bottom:10px;font-weight:bold;font-size:14px;">المادة: .................................. | اليوم: .................. | التاريخ: ..................</div>';
+      // الترويسة (تم تصغير الشعار قليلاً لمنع تداخل النصوص)
+      html += `<div style="text-align:center;margin-bottom:10px;">
+                 <div style="font-family:'Traditional Arabic',serif;font-size:16px;font-weight:bold;color:#1a4b7a;">بسم الله الرحمن الرحيم</div>
+                 <div style="max-height:60px; overflow:hidden; display:inline-block;">${getEagleLogo(90)}</div>
+                 <div style="font-weight:bold;font-size:14px;margin-top:2px;">${(appData.schoolSettings||{}).name || ''}</div>
+                 <div style="font-weight:bold;font-size:15px;margin-top:5px;border:1.5px solid #000;padding:4px;background:#f0f8ff;">كشف تحضير الطلاب - ${hallName}</div>
+               </div>`;
       
-      // الجدول
+      html += '<div style="text-align:center;margin-bottom:5px;font-weight:bold;font-size:13px;">المادة: .................................. | اليوم: .................. | التاريخ: ..................</div>';
+      
       html += '<table><thead><tr>';
-      html += '<th style="width:6%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">م</th>';
-      html += '<th style="width:14%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">رقم الجلوس</th>';
-      html += '<th style="width:35%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">اسم الطالب</th>';
-      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">الصف</th>';
-      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">حاضر</th>';
-      html += '<th style="width:10%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">غائب</th>';
-      html += '<th style="width:15%; background-color:#1e7e34 !important; color:#ffffff !important; border:1px solid #000; padding:4px; font-size:13px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">ملاحظات</th>';
+      html += '<th style="width:6%;">م</th>';
+      html += '<th style="width:14%;">رقم الجلوس</th>';
+      html += '<th style="width:35%;">اسم الطالب</th>';
+      html += '<th style="width:10%;">الصف</th>';
+      html += '<th style="width:10%;">حاضر</th>';
+      html += '<th style="width:10%;">غائب</th>';
+      html += '<th style="width:15%;">ملاحظات</th>';
       html += '</tr></thead><tbody>';
       
       chunk.forEach((item, idx) => {
@@ -10047,7 +10052,7 @@ function printAttendanceList() {
         html += `<tr>
           <td>${rowNum}</td>
           <td>${item.seatNumber}</td>
-          <td style="text-align:right; font-size:14px;">${item.student.name}</td>
+          <td style="text-align:right; padding-right:6px; font-size:13px;">${item.student.name}</td>
           <td>${item.student.class}</td>
           <td></td>
           <td></td>
@@ -10057,7 +10062,7 @@ function printAttendanceList() {
       
       html += '</tbody></table>';
       
-      // التوقيعات مثبتة في الأسفل
+      // التوقيعات
       html += `<div class="signatures">
                 <div>توقيع الكنترول: ................</div>
                 <div>مدير المدرسة: ................</div>
