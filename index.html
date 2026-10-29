@@ -9945,7 +9945,7 @@ function printSeatNumbers() {
           <div class="seat-no">${item.seatNumber}</div>
           <div class="name">${item.student.name}</div>
           <div class="info">
-            <span>الصف: ${item.student.class}</span>
+            <span>الصف: ${getOrdinal(parseInt(item.student.class))}</span>
             <span>القاعة: ${item.hallName}</span>
           </div>
         </div>
