@@ -9924,16 +9924,16 @@ function printSeatNumbers() {
   document.getElementById('hallPrintModal').classList.remove('show');
   
   let html = '<html dir="rtl"><head><meta charset="UTF-8"><title>أرقام الجلوس</title><style>';
-  html += 'body{font-family:"Cairo",sans-serif;margin:0;padding:0;}';
+  html += 'body{font-family:"Cairo",sans-serif;margin:0;padding:0;font-weight:bold;}'; // تمت إضافة font-weight:bold
   html += '.page{width:210mm;height:297mm;padding:10mm;box-sizing:border-box;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:5mm;page-break-after:always;}';
   html += '.card{border:2px solid #000;padding:8px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;}';
   html += '.header{font-size:10px;font-weight:bold;}';
   html += '.seat-no{font-size:24px;font-weight:bold;color:#b33636;margin:10px 0;}';
   html += '.name{font-size:14px;font-weight:bold;margin-bottom:5px;}';
   html += '.info{font-size:11px;display:flex;justify-content:space-between;width:100%;border-top:1px dashed #ccc;padding-top:5px;}';
-  html += '@media print{@page{size:A4;margin:0;}.page{page-break-after:always;}}';
+  html += '@media print{@page{size:A4;margin:0;}.page{page-break-after:always;} *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}}'; // إجبار طباعة الألوان
   html += '</style></head><body>';
-
+  
   const chunkSize = 8;
   for (let i = 0; i < dist.length; i += chunkSize) {
     html += '<div class="page">';
@@ -9952,11 +9952,11 @@ function printSeatNumbers() {
       `;
     });
     if (chunk.length < chunkSize) {
-      for(let j=chunk.length; j<chunkSize; j++) html += '<div class="card" style="border:none;"></div>';
+      for (let j = chunk.length; j < chunkSize; j++) html += '<div class="card" style="border:none;"></div>';
     }
     html += '</div>';
   }
-
+  
   html += '<script>window.onload=function(){window.print();}<\/script></body></html>';
   const win = window.open('', '_blank');
   win.document.write(html);
@@ -9967,16 +9967,16 @@ function printCallList() {
   const dist = window._currentDistribution;
   document.getElementById('hallPrintModal').classList.remove('show');
   const halls = [...new Set(dist.map(d => d.hallName))];
-
+  
   let html = '<html dir="rtl"><head><meta charset="UTF-8"><style>';
-  html += 'body{font-family:"Cairo",sans-serif;}';
+  html += 'body{font-family:"Cairo",sans-serif;font-weight:bold;}'; // إضافة الخط الغامق
   html += '.page{padding:15px;page-break-after:always;}';
   html += 'table{width:100%;border-collapse:collapse;text-align:center;}';
-  html += 'th,td{border:1px solid #000;padding:6px;font-size:12px;}';
+  html += 'th,td{border:1px solid #000;padding:6px;font-size:12px;font-weight:bold;}'; // إضافة الخط الغامق
   html += 'th{background:#1a4b7a;color:#fff;}';
-  html += '@media print{@page{size:A4 portrait;margin:1cm;}}';
+  html += '@media print{@page{size:A4 portrait;margin:1cm;} *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}}'; // إجبار طباعة الألوان
   html += '</style></head><body>';
-
+  
   halls.forEach(hallName => {
     const hallStudents = dist.filter(d => d.hallName === hallName);
     html += `<div class="page">${getPrintHeader('كشف مناداة الطلاب', hallName)}`;
@@ -9984,9 +9984,9 @@ function printCallList() {
     hallStudents.forEach((item, idx) => {
       html += `<tr><td>${idx+1}</td><td>${item.seatNumber}</td><td style="text-align:right">${item.student.name}</td><td>${item.student.class}</td><td></td></tr>`;
     });
-    html += '</tbody></table><div style="margin-top:30px;display:flex;justify-content:space-between;"><div>توقيع الكنترول: ................</div><div>مدير المدرسة: ................</div></div></div>';
+    html += '</tbody></table><div style="margin-top:30px;display:flex;justify-content:space-between;font-weight:bold;"><div>توقيع الكنترول: ................</div><div>مدير المدرسة: ................</div></div></div>';
   });
-
+  
   html += '<script>window.onload=function(){window.print();}<\/script></body></html>';
   const win = window.open('', '_blank');
   win.document.write(html);
@@ -9997,16 +9997,16 @@ function printAttendanceList() {
   const dist = window._currentDistribution;
   document.getElementById('hallPrintModal').classList.remove('show');
   const halls = [...new Set(dist.map(d => d.hallName))];
-
+  
   let html = '<html dir="rtl"><head><meta charset="UTF-8"><style>';
-  html += 'body{font-family:"Cairo",sans-serif;}';
+  html += 'body{font-family:"Cairo",sans-serif;font-weight:bold;}'; // خط غامق لكل الصفحة
   html += '.page{padding:15px;page-break-after:always;}';
   html += 'table{width:100%;border-collapse:collapse;text-align:center;}';
-  html += 'th,td{border:1px solid #000;padding:6px;font-size:12px;}';
-  html += 'th{background:#1e7e34;color:#fff;}';
-  html += '@media print{@page{size:A4 landscape;margin:1cm;}}';
+  html += 'th,td{border:1px solid #000;padding:6px;font-size:12px;font-weight:bold;}'; // خط غامق للخلايا
+  html += 'th{background:#1e7e34 !important;color:#fff !important;}'; // إضافة !important لضمان بقاء اللون
+  html += '@media print{@page{size:A4 landscape;margin:1cm;} *{-webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}}'; // إجبار المتصفح على طباعة الألوان
   html += '</style></head><body>';
-
+  
   halls.forEach(hallName => {
     const hallStudents = dist.filter(d => d.hallName === hallName);
     html += `<div class="page">${getPrintHeader('كشف تحضير الطلاب', hallName)}`;
@@ -10015,15 +10015,14 @@ function printAttendanceList() {
     hallStudents.forEach((item, idx) => {
       html += `<tr><td>${idx+1}</td><td>${item.seatNumber}</td><td style="text-align:right">${item.student.name}</td><td>${item.student.class}</td><td></td><td></td><td></td></tr>`;
     });
-    html += '</tbody></table><div style="margin-top:30px;display:flex;justify-content:space-between;"><div>توقيع الكنترول: ................</div><div>مدير المدرسة: ................</div></div></div>';
+    html += '</tbody></table><div style="margin-top:30px;display:flex;justify-content:space-between;font-weight:bold;"><div>توقيع الكنترول: ................</div><div>مدير المدرسة: ................</div></div></div>';
   });
-
+  
   html += '<script>window.onload=function(){window.print();}<\/script></body></html>';
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
 }
-
 // الخطوة 1: فتح نافذة اختيار التاريخ
 function printAbsenceReport() {
   document.getElementById('hallPrintModal').classList.remove('show');
