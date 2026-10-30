@@ -1324,6 +1324,13 @@ body.light-mode #summarySchoolType {
 <div class="card" style="border-right-color:#00838f;">
   <strong style="color:#00838f;">✍️ أسماء الموقّعين الرسميين</strong>
   <p style="font-size:12px;color:#7a8ba8;margin:8px 0;">تظهر هذه الأسماء في الكشوفات والتقارير والشهادات والخلاصة.</p>
+  
+  <label style="font-size:12px;color:#7a8ba8;display:block;margin-top:10px;margin-bottom:4px;font-weight:bold;">مدير المدرسة</label>
+  <input type="text" id="setPrincipalName" placeholder="مثال: أ. محمد أحمد" />
+  
+  <label style="font-size:12px;color:#7a8ba8;display:block;margin-top:10px;margin-bottom:4px;font-weight:bold;">مدير إدارة التربية والتعليم بالمديرية</label>
+  <input type="text" id="setEducationDirectorName" placeholder="مثال: أ. عبدالله علي" />
+  
   <label style="font-size:12px;color:#7a8ba8;display:block;margin-top:10px;margin-bottom:4px;font-weight:bold;">مدير مكتب التربية والتعليم بالمحافظة</label>
   <input type="text" id="setOfficeDirectorName" placeholder="مثال: أ. سعيد حسن" />
   
@@ -1334,7 +1341,7 @@ body.light-mode #summarySchoolType {
   <label style="font-size:12px;color:#b57aff;display:block;margin-bottom:6px;font-weight:bold;">➕ إضافة توقيعات مخصصة</label>
   <div id="customSignaturesContainer"></div>
   <button type="button" class="btn btn-outline btn-sm" style="width:100%;margin-top:6px;border-color:#b57aff;color:#b57aff;" onclick="addCustomSignatureField()">➕ إضافة توقيع جديد</button>
-  </div>
+</div>
 <div class="card" style="border-right-color:#6a1b9a;">
   <strong style="color:#6a1b9a;">🔐 بيانات تسجيل الدخول</strong>
   <label style="font-size:12px;color:#7a8ba8;display:block;margin-bottom:4px;font-weight:bold;">👤 اسم المستخدم</label>
@@ -2844,33 +2851,34 @@ playBeep(900, 0.15, 0); playBeep(700, 0.15, 180); playBeep(900, 0.15, 360);
 // الإعدادات
 // ═══════════════════════════════════════════════════════════
 function loadSettingsUI() {
-const s = appData.schoolSettings || getDefaultSettings();
-document.getElementById('setName').value = s.name || '';
-document.getElementById('setGovernorate').value = s.governorate || '';
-document.getElementById('setDistrict').value = s.district || '';
-document.getElementById('setDescription').value = s.description || '';
-document.getElementById('setMinistry').value = s.ministry || '';
-document.getElementById('setMinistryBranch').value = s.ministryBranch || '';
-document.getElementById('setEducationOffice').value = s.educationOffice || '';
-document.getElementById('setUsername').value = s.username || 'teacher';
-document.getElementById('setPassword').value = s.password || '123';
-document.getElementById('setPrincipalName').value = s.principalName || '';
-document.getElementById('setEducationDirectorName').value = s.educationDirectorName || '';
-document.getElementById('setOfficeDirectorName').value = s.officeDirectorName || '';
-document.getElementById('setExamDirectorName').value = s.examDirectorName || '';
-
-const customContainer = document.getElementById('customSignaturesContainer');
-if (customContainer) {
+  const s = appData.schoolSettings || getDefaultSettings();
+  document.getElementById('setName').value = s.name || '';
+  document.getElementById('setGovernorate').value = s.governorate || '';
+  document.getElementById('setDistrict').value = s.district || '';
+  document.getElementById('setDescription').value = s.description || '';
+  document.getElementById('setMinistry').value = s.ministry || '';
+  document.getElementById('setMinistryBranch').value = s.ministryBranch || '';
+  document.getElementById('setEducationOffice').value = s.educationOffice || '';
+  document.getElementById('setUsername').value = s.username || 'teacher';
+  document.getElementById('setPassword').value = s.password || '123';
+  document.getElementById('setPrincipalName').value = s.principalName || '';
+  document.getElementById('setEducationDirectorName').value = s.educationDirectorName || '';
+  document.getElementById('setOfficeDirectorName').value = s.officeDirectorName || '';
+  document.getElementById('setExamDirectorName').value = s.examDirectorName || '';
+  
+  const customContainer = document.getElementById('customSignaturesContainer');
+  if (customContainer) {
     customContainer.innerHTML = '';
     if (s.customSignatures && Array.isArray(s.customSignatures)) {
-        s.customSignatures.forEach(sig => addCustomSignatureField(sig.role, sig.name));
+      s.customSignatures.forEach(sig => addCustomSignatureField(sig.role, sig.name));
     }
-}
-const logoPreview = document.getElementById('logoPreview');
-if (s.logo) logoPreview.innerHTML = `<img src="${s.logo}" alt="شعار" />`;
-else logoPreview.innerHTML = '<p style="color:#5a6b85;font-size:12px;">لا يوجد شعار</p>';
-renderEagleLogoPreview();
-updateSettingsPreview();
+  }
+  
+  const logoPreview = document.getElementById('logoPreview');
+  if (s.logo) logoPreview.innerHTML = `<img src="${s.logo}" alt="شعار" />`;
+  else logoPreview.innerHTML = '<p style="color:#5a6b85;font-size:12px;">لا يوجد شعار</p>';
+  renderEagleLogoPreview();
+  updateSettingsPreview();
 }
 function updateSettingsPreview() {
 const s = { name: document.getElementById('setName').value || 'مدرسة أسماء', governorate: document.getElementById('setGovernorate').value || 'لحج', district: document.getElementById('setDistrict').value || 'القبيطة', description: document.getElementById('setDescription').value || 'الأساسية والثانوية', ministry: document.getElementById('setMinistry').value || 'الجمهورية اليمنية', ministryBranch: document.getElementById('setMinistryBranch').value || 'وزارة التربية والتعليم', educationOffice: document.getElementById('setEducationOffice').value || 'مكتب التربية والتعليم', logo: (appData && appData.schoolSettings) ? appData.schoolSettings.logo : null };
@@ -2932,6 +2940,7 @@ appData.schoolSettings.principalName = document.getElementById('setPrincipalName
 appData.schoolSettings.educationDirectorName = document.getElementById('setEducationDirectorName').value.trim();
 appData.schoolSettings.officeDirectorName = document.getElementById('setOfficeDirectorName').value.trim();
 appData.schoolSettings.examDirectorName = document.getElementById('setExamDirectorName').value.trim();
+
 const customSigs = [];
 document.querySelectorAll('.custom-signature-row').forEach(row => {
     const role = row.querySelector('.custom-sig-role').value.trim();
@@ -2939,6 +2948,7 @@ document.querySelectorAll('.custom-signature-row').forEach(row => {
     if (role) customSigs.push({ role, name });
 });
 appData.schoolSettings.customSignatures = customSigs;
+
 saveDataSync(); updateSchoolNameEverywhere(); showToast('✅ تم حفظ الإعدادات');
 }
 function updateSchoolNameEverywhere() {
