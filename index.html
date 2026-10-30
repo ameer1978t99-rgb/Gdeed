@@ -308,6 +308,80 @@ body.light-mode .grade-sticky-bar select {
 @media (max-width: 400px) {
     .grade-sticky-bar select { font-size: 12px; padding: 8px; }
 }
+/* ═══════════════════════════════════════════════════════════ */
+/* 🎤 الإدخال الصوتي للدرجات */
+/* ═══════════════════════════════════════════════════════════ */
+#voiceInputBtn:active { transform: scale(0.97); }
+
+#voiceStatusBar {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 516px;
+  background: linear-gradient(145deg, #1a4b7a, #0f3557);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  z-index: 950;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: bold;
+  border: 2px solid #4a9eff;
+}
+#voiceStatusBar.show { display: flex; }
+#voiceStatusBar .vs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #4ade80;
+}
+#voiceStatusBar .vs-title { display: flex; align-items: center; gap: 6px; }
+#voiceStatusBar .vs-stop-btn {
+  background: #3d0f1e;
+  border: none;
+  color: #f87171;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: bold;
+}
+#voiceStatusBar #vsCurrentInfo {
+  font-size: 13px;
+  color: #eab308;
+  line-height: 1.4;
+}
+#voiceStatusBar #vsTranscript {
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0,0,0,0.3);
+  padding: 6px 10px;
+  border-radius: 6px;
+  min-height: 20px;
+  line-height: 1.3;
+}
+
+#gradeEditor input.voice-active {
+  border: 2px solid #b57aff !important;
+  background: #2a1a35 !important;
+  animation: voicePulse 1.5s infinite;
+}
+#gradeEditor input.voice-success {
+  border-color: #4ade80 !important;
+  background: #0d2f1f !important;
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.5) !important;
+  transition: all 0.3s;
+}
+@keyframes voicePulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(181,122,255,0.4); }
+  50%      { box-shadow: 0 0 0 6px rgba(181,122,255,0.15); }
+}
 .main-title-bar { text-align: center; padding: 6px 0 12px; font-size: 18px; font-weight: bold; color: #ffffff; display: flex; justify-content: center; align-items: center; gap: 8px; }
 .main-title-bar .school-icon { font-size: 26px; }
 .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0; }
@@ -1410,6 +1484,9 @@ body.light-mode #summarySchoolType {
 <option value="المجتمع">المجتمع</option>
 </select>
 </div>
+<button id="voiceInputBtn" onclick="toggleVoiceInput()" style="width:100%;margin:8px 0;padding:14px;font-size:16px;font-weight:bold;background:linear-gradient(145deg,#6a1b9a,#4a148c);color:#fff;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:0.2s;">
+  🎤 إدخال صوتي
+</button>
 <div id="gradeEditor"></div>
 <button class="btn" onclick="saveGradesData()">💾 حفظ الدرجات</button>
 <button class="btn btn-outline btn-sm" onclick="showPage('page-main')">🔙 العودة</button>
@@ -2349,6 +2426,317 @@ return { name: 'مدرسة أسماء', description: 'الأساسية والث�
 function getDefaultData() { return { students: [], grades: {}, years: ['2025', '2026', '2027'], nextStudentId: 1, schoolSettings: getDefaultSettings() }; }
 let appData = loadData();
 let editingStudentId = null;
+// ═══════════════════════════════════════════════════════════
+// 🎤 الإدخال الصوتي للدرجات
+// ═══════════════════════════════════════════════════════════
+const voiceState = {
+  active: false,
+  recognition: null,
+  currentInput: null,
+  currentStudentId: null,
+  currentField: null,
+  currentMax: 20,
+  restarting: false,
+  lastRestart: 0
+};
+
+// ─── محوّل الكلام العربي إلى رقم صحيح ───
+function parseArabicNumber(text) {
+  if (!text) return null;
+  let s = String(text).trim();
+
+  // توحيد الأرقام العربية (٠١٢...) إلى إنجليزية
+  s = s.replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+  // إزالة التشكيل والتطويل
+  s = s.replace(/[\u064B-\u0652\u0670\u0640]/g, '');
+  // توحيد الحروف
+  s = s.replace(/[إأآا]/g, 'ا').replace(/[ىي]/g, 'ي').replace(/ة/g, 'ه');
+  // إزالة علامات الترقيم
+  s = s.replace(/[.,!?،؛؟]/g, '');
+  s = s.replace(/\s+/g, ' ').trim();
+
+  // 1) رقم مكتوب مباشرة
+  const digitMatch = s.match(/\d+/);
+  if (digitMatch) {
+    const n = parseInt(digitMatch[0], 10);
+    if (!isNaN(n)) return n;
+  }
+
+  // 2) جدول الكلمات
+  const words = {
+    'صفر': 0, 'زيرو': 0,
+    'واحد': 1, 'واحده': 1, 'وحده': 1,
+    'اثنان': 2, 'اثنين': 2, 'اثنتين': 2, 'ثنتين': 2,
+    'ثلاثه': 3, 'ثلاث': 3,
+    'اربعه': 4, 'اربع': 4,
+    'خمسه': 5, 'خمس': 5,
+    'سته': 6, 'ست': 6,
+    'سبعه': 7, 'سبع': 7,
+    'ثمانيه': 8, 'ثمان': 8, 'تمانيه': 8, 'تمانيه': 8,
+    'تسعه': 9, 'تسع': 9,
+    'عشره': 10, 'عشر': 10,
+    'احد عشر': 11, 'احدي عشر': 11, 'احدعشر': 11,
+    'اثنا عشر': 12, 'اثني عشر': 12, 'اثني عشرة': 12,
+    'ثلاثه عشر': 13, 'ثلاث عشر': 13,
+    'اربعه عشر': 14, 'اربع عشر': 14,
+    'خمسه عشر': 15, 'خمس عشر': 15,
+    'سته عشر': 16, 'ست عشر': 16,
+    'سبعه عشر': 17, 'سبع عشر': 17,
+    'ثمانيه عشر': 18, 'ثمان عشر': 18,
+    'تسعه عشر': 19, 'تسع عشر': 19,
+    'عشرون': 20, 'عشرين': 20,
+    'ثلاثون': 30, 'ثلاثين': 30
+  };
+
+  if (words[s] !== undefined) return words[s];
+
+  // 3) "X وعشرون" / "X وعشرين"
+  if (/عشر(ون|ين)/.test(s)) {
+    const before = s.split(/و?\s*عشر(?:ون|ين)/)[0].trim();
+    if (before) {
+      const n = words[before];
+      if (n !== undefined && n >= 1 && n <= 9) return 20 + n;
+    }
+    return 20;
+  }
+
+  // 4) البحث عن أي كلمة معروفة (الأطول أولاً)
+  const keys = Object.keys(words).sort((a, b) => b.length - a.length);
+  for (const k of keys) if (s.includes(k)) return words[k];
+
+  return null;
+}
+
+// ─── أصوات التنبيه ───
+function playVoiceError() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const beep = (f, d, delay) => setTimeout(() => {
+      try {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'square';
+        o.frequency.value = f;
+        g.gain.setValueAtTime(0.15, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d);
+        o.start(ctx.currentTime); o.stop(ctx.currentTime + d);
+      } catch(e) {}
+    }, delay);
+    beep(500, 0.2, 0);
+    beep(350, 0.3, 200);
+  } catch(e) {}
+}
+
+function playVoiceSuccess() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.value = 1000;
+    g.gain.setValueAtTime(0.1, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.15);
+  } catch(e) {}
+}
+
+// ─── شريط الحالة ───
+function showVoiceTranscript(msg) {
+  const el = document.getElementById('vsTranscript');
+  if (el) el.textContent = msg || '';
+}
+
+function updateVoiceStatusBar() {
+  const infoEl = document.getElementById('vsCurrentInfo');
+  if (!infoEl) return;
+
+  if (!voiceState.currentInput || !voiceState.currentInput.isConnected) {
+    infoEl.innerHTML = '👆 <strong style="color:#eab308;">اضغط على أي خانة للبدء</strong>';
+    return;
+  }
+
+  const all = Array.from(document.querySelectorAll('#gradeEditor input[data-student-id]'));
+  const idx = all.indexOf(voiceState.currentInput);
+  const row = voiceState.currentInput.closest('.grade-row');
+  const nameEl = row ? row.querySelector('.student-name') : null;
+  const name = nameEl ? nameEl.textContent.trim() : '—';
+  const fieldLabel = voiceState.currentField === 'exam1' ? 'محصلة' : 'نصف العام';
+
+  infoEl.innerHTML = `👤 <strong>${name}</strong> — ${fieldLabel} (الحد ${voiceState.currentMax}) <span style="font-size:11px;color:#7a8ba8;">[${idx + 1}/${all.length}]</span>`;
+}
+
+// ─── معالجة الكلام ───
+function handleVoiceTranscript(text) {
+  if (!voiceState.currentInput || !voiceState.currentInput.isConnected) {
+    showVoiceTranscript('👆 اضغط على خانة أولاً');
+    return;
+  }
+
+  showVoiceTranscript(`🎤 سمعت: "${text}"`);
+
+  const num = parseArabicNumber(text);
+  if (num === null) {
+    playVoiceError();
+    showVoiceTranscript(`❌ لم أفهم: "${text}"`);
+    return;
+  }
+
+  if (num < 0 || num > voiceState.currentMax) {
+    playVoiceError();
+    showVoiceTranscript(`❌ ${num} يتجاوز الحد (${voiceState.currentMax}) — أعد`);
+    return;
+  }
+
+  const inp = voiceState.currentInput;
+  inp.value = num;
+  updateGradeField(inp, voiceState.currentField);
+
+  inp.classList.add('voice-success');
+  setTimeout(() => { if (inp) inp.classList.remove('voice-success'); }, 700);
+
+  playVoiceSuccess();
+  showVoiceTranscript(`✅ ${num}`);
+
+  voiceAdvance();
+}
+
+function voiceAdvance() {
+  if (!voiceState.currentInput) return;
+
+  const all = Array.from(document.querySelectorAll('#gradeEditor input[data-student-id]'));
+  const idx = all.indexOf(voiceState.currentInput);
+  if (idx < 0) { stopVoiceInput(); return; }
+
+  const nextIdx = idx + 1;
+  if (nextIdx < all.length) {
+    all[nextIdx].focus(); // focusin يحدّث الحالة
+  } else {
+    showVoiceTranscript('🎉 تم إدخال جميع الدرجات!');
+    setTimeout(() => { if (voiceState.active) stopVoiceInput(); }, 1500);
+  }
+}
+
+// ─── بدء / إيقاف ───
+function startVoiceInput() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert('⚠️ الإدخال الصوتي غير مدعوم في هذا المتصفح\n\nالرجاء استخدام Google Chrome أو Microsoft Edge\n\n(لا يعمل على Firefox أو Safari القديم)');
+    return;
+  }
+
+  const inputs = document.querySelectorAll('#gradeEditor input[data-student-id]');
+  if (inputs.length === 0) {
+    alert('⚠️ لا يوجد طلاب — اختر مادة بها طلاب');
+    return;
+  }
+
+  voiceState.active = true;
+  voiceState.recognition = new SR();
+  voiceState.recognition.lang = 'ar-SA';
+  voiceState.recognition.continuous = true;
+  voiceState.recognition.interimResults = false;
+  voiceState.recognition.maxAlternatives = 1;
+
+  voiceState.recognition.onstart = () => showVoiceTranscript('🎤 جاري الاستماع...');
+
+  voiceState.recognition.onresult = (event) => {
+    if (!voiceState.active) return;
+    const pageGrades = document.getElementById('page-grades');
+    if (!pageGrades || !pageGrades.classList.contains('active')) { stopVoiceInput(); return; }
+    const last = event.results[event.results.length - 1];
+    if (!last.isFinal) return;
+    handleVoiceTranscript(last[0].transcript);
+  };
+
+  voiceState.recognition.onerror = (event) => {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      alert('⚠️ يجب السماح باستخدام الميكروفون');
+      stopVoiceInput();
+    } else if (event.error === 'network') {
+      showVoiceTranscript('⚠️ تحقق من الاتصال بالإنترنت');
+    }
+  };
+
+  voiceState.recognition.onend = () => {
+    if (!voiceState.active || voiceState.restarting) return;
+    const now = Date.now();
+    if (now - voiceState.lastRestart < 400) return; // منع حلقة سريعة
+    voiceState.lastRestart = now;
+    voiceState.restarting = true;
+    setTimeout(() => {
+      try { voiceState.recognition.start(); } catch(e) {}
+      voiceState.restarting = false;
+    }, 200);
+  };
+
+  try {
+    voiceState.recognition.start();
+  } catch(e) {
+    alert('⚠️ فشل تشغيل الميكروفون: ' + e.message);
+    voiceState.active = false;
+    return;
+  }
+
+  const btn = document.getElementById('voiceInputBtn');
+  if (btn) {
+    btn.innerHTML = '⏹️ إيقاف الإدخال الصوتي';
+    btn.style.background = 'linear-gradient(145deg,#b33636,#7a1a1a)';
+  }
+  const bar = document.getElementById('voiceStatusBar');
+  if (bar) bar.classList.add('show');
+
+  updateVoiceStatusBar();
+  if (!voiceState.currentInput) showVoiceTranscript('👆 اضغط على أي خانة الآن');
+}
+
+function stopVoiceInput() {
+  voiceState.active = false;
+  if (voiceState.recognition) {
+    try { voiceState.recognition.stop(); } catch(e) {}
+    voiceState.recognition = null;
+  }
+  document.querySelectorAll('#gradeEditor input.voice-active').forEach(el => el.classList.remove('voice-active'));
+  voiceState.currentInput = null;
+  voiceState.currentStudentId = null;
+  voiceState.currentField = null;
+
+  const btn = document.getElementById('voiceInputBtn');
+  if (btn) {
+    btn.innerHTML = '🎤 إدخال صوتي';
+    btn.style.background = 'linear-gradient(145deg,#6a1b9a,#4a148c)';
+  }
+  const bar = document.getElementById('voiceStatusBar');
+  if (bar) bar.classList.remove('show');
+  showVoiceTranscript('');
+}
+
+function toggleVoiceInput() {
+  if (voiceState.active) stopVoiceInput();
+  else startVoiceInput();
+}
+
+// ─── تتبع الخانة عند التركيز ───
+document.addEventListener('focusin', (e) => {
+  if (!voiceState.active) return;
+  const inp = e.target;
+  if (!inp || !inp.matches || !inp.matches('#gradeEditor input[data-student-id]')) return;
+
+  document.querySelectorAll('#gradeEditor input.voice-active').forEach(el => el.classList.remove('voice-active'));
+  inp.classList.add('voice-active');
+
+  voiceState.currentInput = inp;
+  voiceState.currentStudentId = parseInt(inp.dataset.studentId);
+  voiceState.currentField = inp.dataset.field;
+  voiceState.currentMax = voiceState.currentField === 'exam1' ? 20 : 30;
+
+  updateVoiceStatusBar();
+});
 
 function loadData() {
 const stored = localStorage.getItem(STORAGE_KEY);
@@ -4410,6 +4798,15 @@ function executeFinalPrint(htmlContent) {
         </head>
         <body>
             ${htmlContent}
+            <!-- 🎤 شريط حالة الإدخال الصوتي -->
+<div id="voiceStatusBar">
+  <div class="vs-header">
+    <div class="vs-title">🎤 الإدخال الصوتي</div>
+    <button class="vs-stop-btn" onclick="stopVoiceInput()">⏹️ إيقاف</button>
+  </div>
+  <div id="vsCurrentInfo">👆 اضغط على أي خانة للبدء</div>
+  <div id="vsTranscript"></div>
+</div>
         </body>
         </html>
     `);
