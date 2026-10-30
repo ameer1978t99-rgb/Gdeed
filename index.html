@@ -4513,7 +4513,7 @@ function buildSignaturesHTML(isSummary) {
   const s = appData.schoolSettings || getDefaultSettings();
   let signatures = [
     { role: 'مدير المدرسة', name: s.principalName || '' },
-    { role: 'االمختص', name: '' },
+    { role: 'المختص', name: '' },
     { role: 'مدير إدارة التربية والتعليم بالمديرية', name: s.educationDirectorName || '' },
     { role: 'رئيس قسم الامتحانات بالمحافظة', name: s.examDirectorName || '' },
     { role: 'مدير مكتب التربية بالمحافظة', name: s.officeDirectorName || '' }
@@ -5833,7 +5833,9 @@ ${headerHtml}
 <div style="flex:1;background:#e8f5e9;border:2px solid #1e7e34;border-radius:8px;padding:10px;text-align:center;"><div style="font-size:12px;color:#1e7e34;font-weight:bold;">النسبة العامة للنجاح</div><div style="font-size:22px;font-weight:bold;color:#1e7e34;">${schoolSuccess}%</div></div>
 <div style="flex:1;background:#fde8e8;border:2px solid #b33636;border-radius:8px;padding:10px;text-align:center;"><div style="font-size:12px;color:#b33636;font-weight:bold;">النسبة العامة للرسوب</div><div style="font-size:22px;font-weight:bold;color:#b33636;">${schoolFail}%</div></div>
 </div>
-${buildSignaturesHTML(true)}
+<div style="display:flex;justify-content:space-between;margin-top:32px;font-size:13px;">
+<div style="text-align:center;flex:1;"><div style="font-weight:bold;">مدير المدرسة</div>${s.principalName ? `<div style="color:#1a4b7a;font-weight:bold;font-size:12px;margin-top:2px;">${s.principalName}</div>` : ''}<div style="margin-top:30px;width:65%;border-top:1px solid #333;margin-left:auto;margin-right:auto;"></div></div>
+<div style="text-align:center;flex:1;"><div style="font-weight:bold;">إدارة التربية</div>${s.educationDirectorName ? `<div style="color:#1a4b7a;font-weight:bold;font-size:12px;margin-top:2px;">${s.educationDirectorName}</div>` : ''}<div style="margin-top:30px;width:65%;border-top:1px solid #333;margin-left:auto;margin-right:auto;"></div></div>
 </div></div>`;
 container.innerHTML = html;
 showToast('✅ تم إنشاء الخلاصة');
