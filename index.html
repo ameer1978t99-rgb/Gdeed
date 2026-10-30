@@ -4513,8 +4513,8 @@ function buildSignaturesHTML(isSummary) {
   const s = appData.schoolSettings || getDefaultSettings();
   let signatures = [
     { role: 'مدير المدرسة', name: s.principalName || '' },
-    { role: 'رئيس قسم الاختبارات بالمديرية', name: '' },
-    { role: 'مدير إدارة التربية والتعليم', name: s.educationDirectorName || '' },
+    { role: 'االمختص', name: '' },
+    { role: 'مدير إدارة التربية والتعليم بالمديرية', name: s.educationDirectorName || '' },
     { role: 'رئيس قسم الامتحانات بالمحافظة', name: s.examDirectorName || '' },
     { role: 'مدير مكتب التربية بالمحافظة', name: s.officeDirectorName || '' }
   ];
