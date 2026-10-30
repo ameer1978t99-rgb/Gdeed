@@ -307,6 +307,38 @@ body.light-mode .grade-sticky-bar select {
 }
 @media (max-width: 400px) {
     .grade-sticky-bar select { font-size: 12px; padding: 8px; }
+    /* ═══════════════════════════════════════════════════════════ */
+/* 🎤 حاوية مثبّتة تجمع (الصف + المادة + زر الإدخال الصوتي) */
+/* ═══════════════════════════════════════════════════════════ */
+.grade-sticky-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #0f1626;
+    padding: 8px 12px;
+    margin: 0 -12px 8px -12px;
+    border-bottom: 2px solid #1a4b7a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+body.light-mode .grade-sticky-wrapper {
+    background: #f4f7fb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.grade-sticky-wrapper .grade-sticky-bar {
+    position: relative !important;
+    top: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
 }
 /* ═══════════════════════════════════════════════════════════ */
 /* 🎤 الإدخال الصوتي للدرجات */
@@ -1458,6 +1490,7 @@ body.light-mode #summarySchoolType {
 <option value="الوحيدة">الوحيدة</option><option value="أ">أ</option>
 <option value="ب">ب</option><option value="ج">ج</option>
 </select>
+<div class="grade-sticky-wrapper">
 <!-- ✅ الشريط المثبت: الصف + المادة -->
 <div class="grade-sticky-bar">
 <select id="gradeClass" onchange="loadGrades()">
@@ -1487,6 +1520,7 @@ body.light-mode #summarySchoolType {
 <button id="voiceInputBtn" onclick="toggleVoiceInput()" style="width:100%;margin:8px 0;padding:14px;font-size:16px;font-weight:bold;background:linear-gradient(145deg,#6a1b9a,#4a148c);color:#fff;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:0.2s;">
   🎤 إدخال صوتي
 </button>
+</div>
 <div id="gradeEditor"></div>
 <button class="btn" onclick="saveGradesData()">💾 حفظ الدرجات</button>
 <button class="btn btn-outline btn-sm" onclick="showPage('page-main')">🔙 العودة</button>
