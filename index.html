@@ -1324,13 +1324,17 @@ body.light-mode #summarySchoolType {
 <div class="card" style="border-right-color:#00838f;">
   <strong style="color:#00838f;">✍️ أسماء الموقّعين الرسميين</strong>
   <p style="font-size:12px;color:#7a8ba8;margin:8px 0;">تظهر هذه الأسماء في الكشوفات والتقارير والشهادات والخلاصة.</p>
-  <label style="font-size:12px;color:#7a8ba8;display:block;margin-top:10px;margin-bottom:4px;font-weight:bold;">مدير المدرسة</label>
-  <input type="text" id="setPrincipalName" placeholder="مثال: أ. محمد أحمد" />
-  <label style="font-size:12px;color:#7a8ba8;display:block;margin-top:10px;margin-bottom:4px;font-weight:bold;">مدير إدارة التربية والتعليم بالمديرية</label>
-  <input type="text" id="setEducationDirectorName" placeholder="مثال: أ. عبدالله علي" />
   <label style="font-size:12px;color:#7a8ba8;display:block;margin-top:10px;margin-bottom:4px;font-weight:bold;">مدير مكتب التربية والتعليم بالمحافظة</label>
   <input type="text" id="setOfficeDirectorName" placeholder="مثال: أ. سعيد حسن" />
-</div>
+  
+  <label style="font-size:12px;color:#7a8ba8;display:block;margin-top:10px;margin-bottom:4px;font-weight:bold;">رئيس قسم الامتحانات بالمحافظة</label>
+  <input type="text" id="setExamDirectorName" placeholder="مثال: أ. أحمد صالح" />
+  
+  <hr style="border:0;border-top:1px dashed #2a3a58;margin:14px 0;">
+  <label style="font-size:12px;color:#b57aff;display:block;margin-bottom:6px;font-weight:bold;">➕ إضافة توقيعات مخصصة</label>
+  <div id="customSignaturesContainer"></div>
+  <button type="button" class="btn btn-outline btn-sm" style="width:100%;margin-top:6px;border-color:#b57aff;color:#b57aff;" onclick="addCustomSignatureField()">➕ إضافة توقيع جديد</button>
+  </div>
 <div class="card" style="border-right-color:#6a1b9a;">
   <strong style="color:#6a1b9a;">🔐 بيانات تسجيل الدخول</strong>
   <label style="font-size:12px;color:#7a8ba8;display:block;margin-bottom:4px;font-weight:bold;">👤 اسم المستخدم</label>
@@ -2455,7 +2459,20 @@ function getEagleLogo(maxW) {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 130" style="width:100%;max-width:${maxW}px;height:auto;display:block;margin:0 auto;"><defs><linearGradient id="gld" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f5d76e"/><stop offset="50%" stop-color="#d4a017"/><stop offset="100%" stop-color="#8b6914"/></linearGradient></defs><ellipse cx="200" cy="95" rx="55" ry="42" fill="#fff" stroke="#8b6914" stroke-width="2"/><clipPath id="sc"><ellipse cx="200" cy="95" rx="53" ry="40"/></clipPath><g clip-path="url(#sc)"><rect x="147" y="55" width="106" height="27" fill="#ce1126"/><rect x="147" y="82" width="106" height="27" fill="#ffffff"/><rect x="147" y="109" width="106" height="27" fill="#000000"/></g><path d="M200,65 Q90,15 5,25 Q55,45 100,52 Q45,25 0,18 Q75,38 140,58 Q90,32 35,10 Q120,32 175,58 Z" fill="url(#gld)" stroke="#5a4409" stroke-width="1"/><path d="M200,65 Q310,15 395,25 Q345,45 300,52 Q355,25 400,18 Q325,38 260,58 Q310,32 365,10 Q280,32 225,58 Z" fill="url(#gld)" stroke="#5a4409" stroke-width="1"/><ellipse cx="200" cy="90" rx="22" ry="34" fill="url(#gld)" stroke="#5a4409" stroke-width="1.2"/><ellipse cx="185" cy="60" rx="14" ry="15" fill="url(#gld)" stroke="#5a4409" stroke-width="1"/><path d="M172,58 L152,63 L172,68 Z" fill="#d4a017" stroke="#5a4409" stroke-width="0.8"/><circle cx="182" cy="56" r="2.3" fill="#000"/><path d="M192,122 L187,140 M200,124 L200,142 M208,122 L213,140" stroke="url(#gld)" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>`;
 }
 function getDefaultSettings() {
-return { name: 'مدرسة أسماء', description: 'الأساسية والثانوية', governorate: 'لحج', district: 'القبيطة', ministry: 'الجمهورية اليمنية', ministryBranch: 'وزارة التربية والتعليم', educationOffice: 'مكتب التربية والتعليم', principalName: '', educationDirectorName: '', officeDirectorName: '', logo: null, eagleLogo: null, username: 'teacher', password: '123' };
+return { name: 'مدرسة أسماء', description: 'الأساسية والثانوية', governorate: 'لحج', district: 'القبيطة', ministry: 'الجمهورية اليمنية', ministryBranch: 'وزارة التربية والتعليم', educationOffice: 'مكتب التربية والتعليم', principalName: '', educationDirectorName: '', officeDirectorName: '', examDirectorName: '', customSignatures: [], logo: null, eagleLogo: null, username: 'teacher', password: '123' };
+}
+function addCustomSignatureField(role = '', name = '') {
+  const container = document.getElementById('customSignaturesContainer');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = 'custom-signature-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 32px;gap:6px;margin-bottom:6px;';
+  div.innerHTML = `
+    <input type="text" placeholder="المسمى (مثال: رئيس اللجنة)" value="${role}" class="custom-sig-role" style="padding:6px 10px;font-size:13px;" />
+    <input type="text" placeholder="الاسم" value="${name}" class="custom-sig-name" style="padding:6px 10px;font-size:13px;" />
+    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="padding:0;font-size:16px;border-radius:6px;">✕</button>
+  `;
+  container.appendChild(div);
 }
 function getDefaultData() { return { students: [], grades: {}, years: ['2025', '2026', '2027'], nextStudentId: 1, schoolSettings: getDefaultSettings() }; }
 let appData = loadData();
@@ -2788,6 +2805,8 @@ if (parsed.schoolSettings.educationDirectorName === undefined) parsed.schoolSett
 if (parsed.schoolSettings.officeDirectorName === undefined) parsed.schoolSettings.officeDirectorName = '';
 if (!parsed.years || parsed.years.length === 0) parsed.years = ['2025', '2026', '2027'];
 if (!parsed.examSchedule) parsed.examSchedule = [];
+if (parsed.schoolSettings.examDirectorName === undefined) parsed.schoolSettings.examDirectorName = '';
+if (!parsed.schoolSettings.customSignatures) parsed.schoolSettings.customSignatures = [];
 if (!parsed.examNextId) parsed.examNextId = 1;
 return parsed;
 }
@@ -2838,6 +2857,15 @@ document.getElementById('setPassword').value = s.password || '123';
 document.getElementById('setPrincipalName').value = s.principalName || '';
 document.getElementById('setEducationDirectorName').value = s.educationDirectorName || '';
 document.getElementById('setOfficeDirectorName').value = s.officeDirectorName || '';
+document.getElementById('setExamDirectorName').value = s.examDirectorName || '';
+
+const customContainer = document.getElementById('customSignaturesContainer');
+if (customContainer) {
+    customContainer.innerHTML = '';
+    if (s.customSignatures && Array.isArray(s.customSignatures)) {
+        s.customSignatures.forEach(sig => addCustomSignatureField(sig.role, sig.name));
+    }
+}
 const logoPreview = document.getElementById('logoPreview');
 if (s.logo) logoPreview.innerHTML = `<img src="${s.logo}" alt="شعار" />`;
 else logoPreview.innerHTML = '<p style="color:#5a6b85;font-size:12px;">لا يوجد شعار</p>';
@@ -2903,6 +2931,14 @@ appData.schoolSettings.password = document.getElementById('setPassword').value.t
 appData.schoolSettings.principalName = document.getElementById('setPrincipalName').value.trim();
 appData.schoolSettings.educationDirectorName = document.getElementById('setEducationDirectorName').value.trim();
 appData.schoolSettings.officeDirectorName = document.getElementById('setOfficeDirectorName').value.trim();
+appData.schoolSettings.examDirectorName = document.getElementById('setExamDirectorName').value.trim();
+const customSigs = [];
+document.querySelectorAll('.custom-signature-row').forEach(row => {
+    const role = row.querySelector('.custom-sig-role').value.trim();
+    const name = row.querySelector('.custom-sig-name').value.trim();
+    if (role) customSigs.push({ role, name });
+});
+appData.schoolSettings.customSignatures = customSigs;
 saveDataSync(); updateSchoolNameEverywhere(); showToast('✅ تم حفظ الإعدادات');
 }
 function updateSchoolNameEverywhere() {
@@ -4463,37 +4499,52 @@ return `
         ${titleText}
     </div>`;
 }
-function buildPageFooter(pageIdx, totalPages) {
+function buildSignaturesHTML(isSummary) {
   const s = appData.schoolSettings || getDefaultSettings();
-  const principalName = s.principalName || '';
-  const eduDirName = s.educationDirectorName || '';
-  const officeDirName = s.officeDirectorName || '';
-  
-  return `
+  let signatures = [
+    { role: 'مدير المدرسة', name: s.principalName || '' },
+    { role: 'رئيس قسم الاختبارات بالمديرية', name: '' },
+    { role: 'مدير إدارة التربية والتعليم', name: s.educationDirectorName || '' },
+    { role: 'رئيس قسم الامتحانات بالمحافظة', name: s.examDirectorName || '' },
+    { role: 'مدير مكتب التربية بالمحافظة', name: s.officeDirectorName || '' }
+  ];
+
+  if (s.customSignatures && Array.isArray(s.customSignatures)) {
+    s.customSignatures.forEach(sig => {
+      if (sig.role) signatures.push({ role: sig.role, name: sig.name || '' });
+    });
+  }
+
+  signatures = signatures.filter(sig => sig.role && sig.role.trim() !== '');
+
+  if (isSummary) {
+    let html = `<div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-top:32px; font-size:13px;">`;
+    signatures.forEach(sig => {
+      html += `
+        <div style="text-align:center; flex:1; min-width:100px;">
+            <div style="font-weight:bold;">${sig.role}</div>
+            ${sig.name ? `<div style="color:#1a4b7a; font-weight:bold; font-size:12px; margin-top:2px;">${sig.name}</div>` : '<div style="min-height:16px;"></div>'}
+            <div style="margin-top:30px; width:65%; border-top:1px solid #333; margin-left:auto; margin-right:auto;"></div>
+        </div>`;
+    });
+    html += `</div>`;
+    return html;
+  } else {
+    return `
     <div style="margin-top:15px; padding-top:5px; page-break-inside: avoid;">
-        <div style="display:flex; justify-content:space-between; gap:8px; font-size:11px; font-weight:bold; text-align:center; line-height:1.6;">
-            <div style="flex:1;">
-                <div>مدير المدرسة</div>
-                <div style="color:#1a4b7a; min-height:18px;">${principalName}</div>
+        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; font-size:11px; font-weight:bold; text-align:center; line-height:1.6;">
+        ${signatures.map(sig => `
+            <div style="flex:1; min-width:110px; padding:0 5px;">
+                <div>${sig.role}</div>
+                <div style="color:#1a4b7a; min-height:18px;">${sig.name}</div>
             </div>
-            <div style="flex:1;">
-                <div>رئيس قسم الاختبارات بالمديرية</div>
-                <div style="min-height:18px;"></div>
-            </div>
-            <div style="flex:1;">
-                <div>مدير إدارة التربية والتعليم</div>
-                <div style="color:#1a4b7a; min-height:18px;">${eduDirName}</div>
-            </div>
-            <div style="flex:1;">
-                <div>رئيس قسم الامتحانات بالمحافظة</div>
-                <div style="min-height:18px;"></div>
-            </div>
-            <div style="flex:1;">
-                <div>مدير مكتب التربية بالمحافظة</div>
-                <div style="color:#1a4b7a; min-height:18px;">${officeDirName}</div>
-            </div>
+        `).join('')}
         </div>
     </div>`;
+  }
+}
+function buildPageFooter(pageIdx, totalPages) {
+  return buildSignaturesHTML(false);
 }
 // ✅ بناء رؤوس الكشف النهائي مع الأعمدة الجديدة (الجنس، الجنسية، محل الميلاد، تاريخ الميلاد)
 function buildFinalReportHeaderRows(subjects, isHighClass, showPercent, showRank) {
@@ -8019,19 +8070,7 @@ function buildSpecialPageHeader(is9, currentYear) {
 }
 // ✅ بناء تذييل صفحة خلاصة تاسع/ثالث ثانوي (التوقيعات)
 function buildSpecialPageFooter() {
-  const s = appData.schoolSettings || getDefaultSettings();
-  return `
-    <div style="margin-top:14px;padding-top:8px;border-top:2px solid #1a4b7a;">
-      <div style="display:flex;justify-content:space-between;gap:4px;font-size:9px;font-weight:bold;text-align:center;line-height:1.6;">
-        <div style="flex:1;padding:0 2px;"><div>مدير المدرسة</div>${s.principalName ? `<div style="font-size:9px;color:#1a4b7a;margin-top:2px;">${s.principalName}</div>` : ''}</div>
-        <div style="flex:1;padding:0 2px;">رئيس قسم الاختبارات بالمديرية</div>
-        <div style="flex:1;padding:0 2px;"><div>مدير إدارة التربية والتعليم بالمديرية</div>${s.educationDirectorName ? `<div style="font-size:9px;color:#1a4b7a;margin-top:2px;">${s.educationDirectorName}</div>` : ''}</div>
-        <div style="flex:1;padding:0 2px;">رئيس قسم الامتحانات بالمحافظة</div>
-        <div style="flex:1;padding:0 2px;"><div>مدير مكتب التربية والتعليم بالمحافظة</div>${s.officeDirectorName ? `<div style="font-size:9px;color:#1a4b7a;margin-top:2px;">${s.officeDirectorName}</div>` : ''}</div>
-      </div>
-      <div style="height:55px;"></div>
-    </div>
-  `;
+  return buildSignaturesHTML(false);
 }
 // ✅ تقسيم الطلاب إلى صفحات بحجم 20 طالب لكل صفحة
 function paginateArray(arr, pageSize) {
@@ -9395,18 +9434,7 @@ function buildPrimaryHeader(year, classNum, section, mode) {
 }
 
 function buildPrimaryFooter() {
-  const s = appData.schoolSettings || getDefaultSettings();
-  return `
-    <div style="margin-top:10px;padding-top:6px;border-top:2px solid #1a4b7a;">
-      <div style="display:flex;justify-content:space-between;gap:4px;font-size:9px;font-weight:bold;text-align:center;line-height:1.5;">
-        <div style="flex:1;"><div>مدير المدرسة</div>${s.principalName ? `<div style="color:#1a4b7a;">${s.principalName}</div>` : ''}</div>
-        <div style="flex:1;">رئيس قسم الاختبارات بالمديرية</div>
-        <div style="flex:1;"><div>مدير إدارة التربية بالمديرية</div>${s.educationDirectorName ? `<div style="color:#1a4b7a;">${s.educationDirectorName}</div>` : ''}</div>
-        <div style="flex:1;">رئيس قسم الامتحانات بالمحافظة</div>
-        <div style="flex:1;"><div>مدير مكتب التربية بالمحافظة</div>${s.officeDirectorName ? `<div style="color:#1a4b7a;">${s.officeDirectorName}</div>` : ''}</div>
-      </div>
-      <div style="height:35px;"></div>
-    </div>`;
+  return buildSignaturesHTML(false);
 }
 
 function buildPrimaryTable(students, year, classNum, mode, startIndex) {
