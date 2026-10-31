@@ -3003,19 +3003,31 @@ return ordinals[n] || `الـ${n}`;
 }
 function getRankLabel(rank, isTied) { const o = getOrdinal(rank); return isTied ? `${o} - ${o} مكرر` : o; }
 function calculateTop5Ranks(studentsWithTotals) {
-const sorted = [...studentsWithTotals].sort((a, b) => b.totalAll - a.totalAll);
-const rankMap = {};
-if (sorted.length === 0) return rankMap;
-const TOP_N = 10;
-for (let i = 0; i < sorted.length; i++) {
-const item = sorted[i]; const inTopN = i < TOP_N;
-if (!inTopN) { rankMap[item.student.id] = { rank: null, label: '', inTop5: false }; continue; }
-let rank = 1;
-for (let j = 0; j < i; j++) { if (sorted[j].totalAll > item.totalAll) rank++; }
-const tiedCount = sorted.filter(x => x.totalAll === item.totalAll).length;
-rankMap[item.student.id] = { rank: rank, label: getRankLabel(rank, tiedCount > 1), inTop5: true };
-}
-return rankMap;
+  const sorted = [...studentsWithTotals].sort((a, b) => b.totalAll - a.totalAll);
+  const rankMap = {};
+  if (sorted.length === 0) return rankMap;
+  
+  let currentRank = 0;
+  let lastTotal = null;
+  
+  for (let i = 0; i < sorted.length; i++) {
+    const item = sorted[i];
+    
+    // إذا تغير المجموع، ننتقل للترتيب التالي (1, 2, 3...)
+    if (item.totalAll !== lastTotal) {
+      currentRank++;
+      lastTotal = item.totalAll;
+    }
+    
+    // إذا تجاوزنا المركز العاشر، لا نعطي ترتيباً
+    if (currentRank > 10) {
+      rankMap[item.student.id] = { rank: null, label: '', inTop5: false };
+    } else {
+      const tiedCount = sorted.filter(x => x.totalAll === item.totalAll).length;
+      rankMap[item.student.id] = { rank: currentRank, label: getRankLabel(currentRank, tiedCount > 1), inTop5: true };
+    }
+  }
+  return rankMap;
 }
 function getStudentRankInClass(student, year) {
 const classmates = appData.students.filter(s => s.year == year && s.class == student.class && (s.section || DEFAULT_SECTION) === (student.section || DEFAULT_SECTION));
@@ -4980,7 +4992,6 @@ function generateTopStudentsList() {
   const selectedClass = document.getElementById('tsClass').value;
   
   let classesToProcess = [];
-  // إذا اختار "جميع الصفوف" نعالج كل الصفوف، وإلا نعالج الصف المحدد فقط
   if (selectedClass === 'all') {
     classesToProcess = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   } else {
@@ -4993,9 +5004,8 @@ function generateTopStudentsList() {
   
   classesToProcess.forEach(classNum => {
     const students = getStudentsByClass(classNum, year, 'all');
-    if (students.length === 0) return; // تخطي الصفوف الفارغة
+    if (students.length === 0) return;
     
-    // حساب المجاميع للطلاب
     const studentsWithTotals = students.map(st => {
       let totalAll = 0;
       const subjects = getSubjectsForClass(st.class);
@@ -5011,35 +5021,33 @@ function generateTopStudentsList() {
       return { student: st, totalAll };
     });
     
-    // ترتيب تنازلي حسب المجموع
     studentsWithTotals.sort((a, b) => b.totalAll - a.totalAll);
     
-    // استخراج العشرة الأوائل وترتيبهم بالحروف مع مراعاة التساوي
     const top10 = [];
-    let lastTotal = -1;
-    let lastRank = 0;
-    let rankCounter = 0;
+    let currentRank = 0;
+    let lastTotal = null;
     
     for (let i = 0; i < studentsWithTotals.length; i++) {
-      if (i >= 10) break; // العشرة الأوائل فقط
       const item = studentsWithTotals[i];
-      rankCounter++;
       
-      if (item.totalAll === lastTotal) {
-        // نفس المجموع -> نفس الترتيب
-        top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(lastRank, true) });
-      } else {
-        // مجموع جديد
-        lastRank = rankCounter;
-        const tiedCount = studentsWithTotals.filter(x => x.totalAll === item.totalAll).length;
-        top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(rankCounter, tiedCount > 1) });
+      if (item.totalAll !== lastTotal) {
+        currentRank++;
         lastTotal = item.totalAll;
       }
+      
+      if (currentRank > 10) break; // التوقف عند الترتيب 11
+      
+      const tiedCount = studentsWithTotals.filter(x => x.totalAll === item.totalAll).length;
+      
+      top10.push({
+        name: item.student.name,
+        total: item.totalAll,
+        rankLabel: getRankLabel(currentRank, tiedCount > 1)
+      });
     }
     
     if (top10.length === 0) return;
     
-    // بناء صفوف الجدول
     let rowsHtml = '';
     top10.forEach((st, idx) => {
       rowsHtml += `<tr>
@@ -5053,23 +5061,19 @@ function generateTopStudentsList() {
     const s = appData.schoolSettings || getDefaultSettings();
     const yearText = `${year}/${parseInt(year)+1} م`;
     
-    // بناء شكل الورقة
     html += `
       <div class="ts-print-page" style="background:#fff; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.2); width:100%; min-width:400px; max-width:800px; margin-left:auto; margin-right:auto; page-break-after: always; font-family:'Cairo','Tajawal',sans-serif; color:#000;">
         
-        <!-- الترويسة -->
         <div style="text-align:center; margin-bottom:15px; font-weight:bold;">
           <div style="font-family:'Traditional Arabic','Amiri',serif; font-size:16px; margin-bottom:5px;">بسم الله الرحمن الرحيم</div>
           <div style="font-size:14px;">كشف بأسماء الطلاب الأوائل في ${semLabel} للعام ${yearText}</div>
           <div style="font-size:14px; margin-top:2px;">${s.name || 'مدرسة /'}</div>
         </div>
 
-        <!-- اسم الصف -->
         <div style="text-align:center; font-weight:bold; background:#e0e0e0; border:1px solid #000; border-bottom:none; padding:5px; font-size:14px;">
           ${getClassLabelArabic(classNum)}
         </div>
 
-        <!-- الجدول -->
         <table style="width:100%; border-collapse:collapse; text-align:center; font-size:13px;">
           <thead>
             <tr style="background:#d0d0d0;">
