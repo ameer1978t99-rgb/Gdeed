@@ -4946,9 +4946,7 @@ function showReportResult() {
         subjects.forEach(sub => { const total = getStudentGradeExam1(st.id, year, semester, st.class, sub) + getStudentGradeExam2(st.id, year, semester, st.class, sub); totalAll += total; if (total < 25) studentPass = false; });
         return { student: st, totalAll, studentPass };
     });
-    const sorted = [...studentsWithTotals].sort((a, b) => b.totalAll - a.totalAll);
-    const rankMap = {};
-    sorted.forEach((item, idx) => { rankMap[item.student.id] = idx + 1; });
+    const rankMap = calculateTop5Ranks(studentsWithTotals);
     if (orderMode !== 'default' && orderMode !== 'total-desc') {
         const enhanced = students.map(st => { const info = studentsWithTotals.find(x => x.student.id === st.id) || {}; const maxTotal = getSubjectsForClass(st.class).length * 50; const percent = maxTotal > 0 ? ((info.totalAll || 0) / maxTotal) * 100 : 0; return { ...st, _totalAll: info.totalAll || 0, _percent: percent, _studentPass: info.studentPass }; });
         students = sortStudentsByMode(enhanced, orderMode, year, semester, true);
@@ -4981,7 +4979,19 @@ subHR += `</tr>`;
             cells += `<td class="grade-cell">${e1}</td><td class="grade-cell">${e2}</td><td class="grade-cell">${total}</td>`;
         });
         let rankCell = '';
-        if (showRank) { const rank = rankMap[st.id] || '-'; let rc = 'rank-cell'; if (rank === 1) rc += ' rank-1'; else if (rank === 2) rc += ' rank-2'; else if (rank === 3) rc += ' rank-3'; rankCell = `<td class="${rc}">${rank}</td>`; }
+        if (showRank) {
+  const rankInfo = rankMap[st.id] || { label: '', inTop5: false };
+  const rankLabel = rankInfo.label || '-';
+  let rc = 'rank-cell';
+  if (rankInfo.inTop5) {
+    if (rankInfo.rank === 1) rc += ' rank-1';
+    else if (rankInfo.rank === 2) rc += ' rank-2';
+    else if (rankInfo.rank === 3) rc += ' rank-3';
+  } else {
+    rc = '';
+  }
+  rankCell = `<td class="${rc}">${rankLabel}</td>`;
+}
         bodyRows += `<tr><td class="num-col">${idx + 1}</td><td class="student-name">${st.name}</td>${cells}<td class="total-all">${totalAll}</td><td class="${studentPass ? 'pass-cell' : 'fail-cell'}">${studentPass ? 'ناجح' : 'راسب'}</td>${rankCell}</tr>`;
     });
     const classLabel = classNum === 'all' ? 'جميع الصفوف' : getClassLabelArabic(classNum);
@@ -5435,9 +5445,7 @@ function printReport(isPreview) {
     if (studentName) students = students.filter(st => st.name.includes(studentName));
     if (students.length === 0) { showToast('⚠️ لا بيانات'); return; }
     const swt = students.map(st => { const subjects = getSubjectsForClass(st.class); let totalAll = 0; subjects.forEach(sub => { totalAll += getStudentGradeExam1(st.id, year, semester, st.class, sub) + getStudentGradeExam2(st.id, year, semester, st.class, sub); }); return { student: st, totalAll }; });
-    const sorted = [...swt].sort((a, b) => b.totalAll - a.totalAll);
-    const rankMap = {};
-    sorted.forEach((item, idx) => { rankMap[item.student.id] = idx + 1; });
+    const rankMap = calculateTop5Ranks(swt);
     const subjects = getSubjectsForClass(students[0].class);
     const sl = semester === '1' ? 'الفصل الأول' : 'الفصل الثاني';
     const c1 = semester === '1' ? 'المحصلة الأولى' : 'المحصلة الثانية';
@@ -5497,7 +5505,19 @@ pages.forEach((pageStudents, pageIdx) => {
             let totalAll = 0, sp = true, cells = '';
             sSubjects.forEach(sub => { const e1 = getStudentGradeExam1(st.id, year, semester, st.class, sub); const e2 = getStudentGradeExam2(st.id, year, semester, st.class, sub); cells += `<td>${e1}</td><td>${e2}</td><td>${e1 + e2}</td>`; totalAll += e1 + e2; if (e1 + e2 < 25) sp = false; });
             let rc = '';
-            if (showRank) { const rk = rankMap[st.id] || '-'; let cls = 'rank-cell'; if (rk === 1) cls += ' rank-1'; else if (rk === 2) cls += ' rank-2'; else if (rk === 3) cls += ' rank-3'; rc = `<td class="${cls}">${rk}</td>`; }
+            if (showRank) {
+  const rankInfo = rankMap[st.id] || { label: '', inTop5: false };
+  const rankLabel = rankInfo.label || '-';
+  let cls = 'rank-cell';
+  if (rankInfo.inTop5) {
+    if (rankInfo.rank === 1) cls += ' rank-1';
+    else if (rankInfo.rank === 2) cls += ' rank-2';
+    else if (rankInfo.rank === 3) cls += ' rank-3';
+  } else {
+    cls = '';
+  }
+  rc = `<td class="${cls}">${rankLabel}</td>`;
+}
             bodyRows += `<tr><td class="num-col">${globalIndex}</td><td class="student-name">${st.name}</td>${cells}<td class="total-all">${totalAll}</td><td class="${sp ? 'pass-cell' : 'fail-cell'}">${sp ? 'ناجح' : 'راسب'}</td>${rc}</tr>`;
         });
         allPages += `<div class="report-page${pageIdx < pages.length - 1 ? ' page-break' : ''}">${headerHtml}<div class="report-table-container"><table class="final-report-table"><thead>${hR}${shR}</thead><tbody>${bodyRows}</tbody></table></div>${buildPageFooter(pageIdx, pages.length)}</div>`;
