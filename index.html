@@ -1598,13 +1598,9 @@ body.light-mode #summarySchoolType {
     <label style="font-size:14px;font-weight:bold;color:#eab308;display:block;margin-bottom:6px;">📅 العام الدراسي:</label>
     <select id="tsYear" onchange="generateTopStudentsList()"></select>
 
-    <div style="margin-top:15px;display:flex;align-items:center;gap:8px;background:#2a1a00;padding:10px;border-radius:8px;border:1px solid #b8860b;">
-      <input type="checkbox" id="tsSelectAll" onchange="toggleTsClassSelect()" style="width:auto;transform:scale(1.2);cursor:pointer;">
-      <label for="tsSelectAll" style="font-weight:bold;color:#eab308;cursor:pointer;font-size:14px;">تحديد جميع الصفوف</label>
-    </div>
 
     <label style="font-size:14px;font-weight:bold;color:#eab308;display:block;margin-top:15px;margin-bottom:6px;">🏫 الصف:</label>
-    <select id="tsClass" onchange="generateTopStudentsList()" disabled>
+    <select id="tsClass" onchange="generateTopStudentsList()">
       <option value="all">جميع الصفوف</option>
       <option value="1">الصف الأول</option><option value="2">الصف الثاني</option>
       <option value="3">الصف الثالث</option><option value="4">الصف الرابع</option>
@@ -4978,94 +4974,86 @@ function initTopStudentsPage() {
   generateTopStudentsList();
 }
 
-function toggleTsClassSelect() {
-  const isAll = document.getElementById('tsSelectAll').checked;
-  const classSelect = document.getElementById('tsClass');
-  classSelect.disabled = !isAll;
-  if (!isAll) classSelect.value = 'all'; // تصفير الاختيار إذا تم إلغاء التأشير
-  generateTopStudentsList();
-}
-
 function generateTopStudentsList() {
   const year = document.getElementById('tsYear').value;
   const semester = document.getElementById('tsSemester').value;
-  const isAll = document.getElementById('tsSelectAll').checked;
   const selectedClass = document.getElementById('tsClass').value;
   
   let classesToProcess = [];
-  if (isAll || selectedClass === 'all') {
-    classesToProcess = [1,2,3,4,5,6,7,8,9,10,11,12];
+  // إذا اختار "جميع الصفوف" نعالج كل الصفوف، وإلا نعالج الصف المحدد فقط
+  if (selectedClass === 'all') {
+    classesToProcess = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   } else {
     classesToProcess = [parseInt(selectedClass)];
   }
-
-  const semLabel = semester === '1' ? 'الفصل الدراسي الأول' : (semester === '2' ? 'الفصل الدراسي الثاني' : 'النهائي');
+  
+  const semLabel = semester === '1' ? 'الفصل الدراسي الأول' : (semester === '2' ? 'الفصل الدراسي الثاني' : 'العام الدراسي (النهائي)');
   const container = document.getElementById('tsPreviewContainer');
   let html = '';
-
+  
   classesToProcess.forEach(classNum => {
     const students = getStudentsByClass(classNum, year, 'all');
     if (students.length === 0) return; // تخطي الصفوف الفارغة
-
-    // حساب المجاميع
+    
+    // حساب المجاميع للطلاب
     const studentsWithTotals = students.map(st => {
       let totalAll = 0;
       const subjects = getSubjectsForClass(st.class);
       if (semester === '1' || semester === '2') {
-        subjects.forEach(sub => { 
-          totalAll += getStudentGradeExam1(st.id, year, semester, st.class, sub) + getStudentGradeExam2(st.id, year, semester, st.class, sub); 
+        subjects.forEach(sub => {
+          totalAll += getStudentGradeExam1(st.id, year, semester, st.class, sub) + getStudentGradeExam2(st.id, year, semester, st.class, sub);
         });
       } else {
-        subjects.forEach(sub => { 
-          totalAll += getStudentGradeTotal(st.id, year, 1, st.class, sub) + getStudentGradeTotal(st.id, year, 2, st.class, sub); 
+        subjects.forEach(sub => {
+          totalAll += getStudentGradeTotal(st.id, year, 1, st.class, sub) + getStudentGradeTotal(st.id, year, 2, st.class, sub);
         });
       }
       return { student: st, totalAll };
     });
-
-    // ترتيب تنازلي
+    
+    // ترتيب تنازلي حسب المجموع
     studentsWithTotals.sort((a, b) => b.totalAll - a.totalAll);
-
-    // استخراج العشرة الأوائل وترتيبهم بالحروف
+    
+    // استخراج العشرة الأوائل وترتيبهم بالحروف مع مراعاة التساوي
     const top10 = [];
     let lastTotal = -1;
     let lastRank = 0;
     let rankCounter = 0;
-
+    
     for (let i = 0; i < studentsWithTotals.length; i++) {
       if (i >= 10) break; // العشرة الأوائل فقط
       const item = studentsWithTotals[i];
       rankCounter++;
       
       if (item.totalAll === lastTotal) {
-         // نفس المجموع -> نفس الترتيب
-         top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(lastRank, true) });
+        // نفس المجموع -> نفس الترتيب
+        top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(lastRank, true) });
       } else {
-         // مجموع جديد
-         lastRank = rankCounter;
-         const tiedCount = studentsWithTotals.filter(x => x.totalAll === item.totalAll).length;
-         top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(rankCounter, tiedCount > 1) });
-         lastTotal = item.totalAll;
+        // مجموع جديد
+        lastRank = rankCounter;
+        const tiedCount = studentsWithTotals.filter(x => x.totalAll === item.totalAll).length;
+        top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(rankCounter, tiedCount > 1) });
+        lastTotal = item.totalAll;
       }
     }
-
+    
     if (top10.length === 0) return;
-
-    // بناء الجدول
+    
+    // بناء صفوف الجدول
     let rowsHtml = '';
     top10.forEach((st, idx) => {
-       rowsHtml += `<tr>
+      rowsHtml += `<tr>
          <td style="padding:5px; border:1px solid #000; text-align:center; font-weight:bold;">${idx + 1}</td>
          <td style="padding:5px; border:1px solid #000; text-align:right; font-weight:bold;">${st.name}</td>
          <td style="padding:5px; border:1px solid #000; text-align:center;">${st.total}</td>
          <td style="padding:5px; border:1px solid #000; text-align:center; font-weight:bold;">${st.rankLabel}</td>
        </tr>`;
     });
-
+    
     const s = appData.schoolSettings || getDefaultSettings();
     const yearText = `${year}/${parseInt(year)+1} م`;
-
-    // بناء شكل الورقة كما في الصورة
+    
+    // بناء شكل الورقة
     html += `
       <div class="ts-print-page" style="background:#fff; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.2); width:100%; min-width:400px; max-width:800px; margin-left:auto; margin-right:auto; page-break-after: always; font-family:'Cairo','Tajawal',sans-serif; color:#000;">
         
@@ -5076,7 +5064,7 @@ function generateTopStudentsList() {
           <div style="font-size:14px; margin-top:2px;">${s.name || 'مدرسة /'}</div>
         </div>
 
-        <!-- رأس الجدول -->
+        <!-- اسم الصف -->
         <div style="text-align:center; font-weight:bold; background:#e0e0e0; border:1px solid #000; border-bottom:none; padding:5px; font-size:14px;">
           ${getClassLabelArabic(classNum)}
         </div>
@@ -5098,7 +5086,7 @@ function generateTopStudentsList() {
       </div>
     `;
   });
-
+  
   if (html === '') {
     container.innerHTML = '<p style="text-align:center;color:#7a8ba8;padding:20px;">لا توجد بيانات للصفوف المحددة.</p>';
   } else {
