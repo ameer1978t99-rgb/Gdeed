@@ -2034,10 +2034,10 @@ body.light-mode #summarySchoolType {
   <span class="exam-card-icon">🏛️</span>
   <span>قاعات الامتحان</span>
 </button>
-    <button class="exam-card" onclick="showToast('🚧 قيد التطوير')">
-      <span class="exam-card-icon">📋</span>
-      <span>الكنترول</span>
-    </button>
+     <button class="exam-card" onclick="showPage('page-exam-control')">
+   <span class="exam-card-icon">📋</span>
+   <span>الكنترول</span>
+ </button>
     <button class="exam-card" onclick="showPage('page-exam-absence')">
   <span class="exam-card-icon">✋</span>
   <span>الغياب</span>
@@ -2062,6 +2062,36 @@ body.light-mode #summarySchoolType {
   <div id="examScheduleTableContainer" class="final-report-wrapper" style="background:#0f1828;padding:10px;min-height:200px;"></div>
   
   <button class="exam-fab" onclick="openAddExamForm()" title="إضافة يوم امتحاني">+</button>
+</div>
+<!-- ═══════════════ EXAM CONTROL (الكنترول) ═══════════════ -->
+<div class="page" id="page-exam-control">
+  <div class="exam-schedule-header">
+    <button onclick="showPage('page-exams')">‹</button>
+    <div class="exam-schedule-title">نموذج الكنترول</div>
+    <button onclick="printControlSheets()">🖨️</button>
+  </div>
+  
+  <div class="card" style="border-right-color:#4a9eff;">
+    <label style="font-size:14px;font-weight:bold;color:#4a9eff;display:block;margin-bottom:6px;">📅 العام الدراسي:</label>
+    <select id="ctrlYear" onchange="generateControlSheets()"></select>
+    
+    <label style="font-size:14px;font-weight:bold;color:#4a9eff;display:block;margin-top:10px;margin-bottom:6px;">🏫 الصف الدراسي:</label>
+    <select id="ctrlClass" onchange="generateControlSheets()">
+      <option value="all">جميع الصفوف</option>
+      <option value="1">الصف الأول</option><option value="2">الصف الثاني</option>
+      <option value="3">الصف الثالث</option><option value="4">الصف الرابع</option>
+      <option value="5">الصف الخامس</option><option value="6">الصف السادس</option>
+      <option value="7">الصف السابع</option><option value="8">الصف الثامن</option>
+      <option value="9">الصف التاسع</option><option value="10">الصف العاشر</option>
+      <option value="11">الصف الحادي عشر</option><option value="12">الصف الثاني عشر</option>
+    </select>
+    
+    <button class="btn btn-success" style="width:100%;margin-top:15px;" onclick="printControlSheets()">🖨️ طباعة الكشوف</button>
+  </div>
+
+  <div id="ctrlPreviewContainer" style="margin-top:10px; background:#e0e0e0; padding:10px; overflow-x:auto; min-height:200px;">
+    <!-- سيتم توليد المعاينة هنا -->
+  </div>
 </div>
 <!-- ═══════════════ EXAM HALLS ═══════════════ -->
 <div class="page" id="page-exam-halls">
@@ -3141,9 +3171,11 @@ function showPage(id) {
   }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'page-exam-control') initControlPage();
   if (typeof updateBottomNav === 'function') updateBottomNav(id);
   const s = appData.schoolSettings || getDefaultSettings();
   const titles = {
+     'page-exam-control': '📋 كشف الكنترول',
      'page-top-students': '🏆 قائمة الأوائل',
     'page-login': '🏫 ' + s.name,
     'page-main': '🏫 ' + s.name,
@@ -10022,6 +10054,158 @@ function openAddExamForm() {
   document.getElementById('addExamModal').classList.add('show');
 }
 
+// ═══════════════════════════════════════════════════════════
+// 📋 كشف الكنترول
+// ═══════════════════════════════════════════════════════════
+function initControlPage() {
+  const yS = document.getElementById('ctrlYear');
+  if (yS.options.length === 0) {
+    yS.innerHTML = appData.years.map(y => `<option value="${y}">${y} (${getHijriYear(y)}هـ)</option>`).join('');
+    if (appData.years.includes('2026')) yS.value = '2026';
+  }
+  generateControlSheets();
+}
+
+function generateControlSheets() {
+  const year = document.getElementById('ctrlYear').value;
+  const classVal = document.getElementById('ctrlClass').value;
+  const container = document.getElementById('ctrlPreviewContainer');
+  
+  if (!year) {
+    container.innerHTML = '<p style="text-align:center;color:#7a8ba8;padding:20px;">اختر العام الدراسي</p>';
+    return;
+  }
+
+  let classesToProcess = [];
+  if (classVal === 'all') {
+    classesToProcess = [1,2,3,4,5,6,7,8,9,10,11,12];
+  } else {
+    classesToProcess = [parseInt(classVal)];
+  }
+
+  let html = '';
+
+  classesToProcess.forEach(classNum => {
+    // جلب الطلاب وترتيبهم أبجدياً
+    let students = appData.students.filter(s => s.year == year && s.class == classNum);
+    if (students.length === 0) return; // تخطي الصفوف الفارغة
+    
+    students.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+    // توليد صفوف الجدول (نجعلها 25 صفاً كحد أدنى لملء الصفحة)
+    let rowsHtml = '';
+    const maxRows = Math.max(25, students.length);
+    for (let i = 0; i < maxRows; i++) {
+      const st = students[i];
+      const name = st ? st.name : '';
+      rowsHtml += `<tr>
+        <td style="width:6%; text-align:center; padding:4px;">${i + 1}</td>
+        <td style="width:64%; text-align:right; padding:4px 8px; font-weight:bold;">${name}</td>
+        <td style="width:15%;"></td>
+        <td style="width:15%;"></td>
+      </tr>`;
+    }
+
+    const className = getClassLabelArabic(classNum);
+
+    // هيكل الورقة: جدولان متطابقان بجانب بعضهما
+    html += `
+      <div class="ctrl-page" style="background:#fff; padding:10px; margin-bottom:15px; width:100%; min-width:750px; box-shadow:0 2px 5px rgba(0,0,0,0.2); page-break-after: always; font-family:'Cairo','Tajawal',sans-serif; color:#000;">
+        
+        <div style="display:flex; justify-content:space-between; gap:10px;">
+          
+          <!-- الجدول الأول (يمين) -->
+          <div style="flex:1;">
+            <div style="text-align:center; font-weight:bold; font-size:14px; margin-bottom:5px;">${className}</div>
+            <table style="width:100%; border-collapse:collapse; border:1.5px solid #000; text-align:center; font-size:12px;">
+              <thead>
+                <tr style="background:#f0f0f0;">
+                  <th style="border:1px solid #000; padding:4px;">م</th>
+                  <th style="border:1px solid #000; padding:4px;">الاسم</th>
+                  <th style="border:1px solid #000; padding:4px;">1م</th>
+                  <th style="border:1px solid #000; padding:4px;">ن</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- الجدول الثاني (يسار) -->
+          <div style="flex:1;">
+            <div style="text-align:center; font-weight:bold; font-size:14px; margin-bottom:5px;">${className}</div>
+            <table style="width:100%; border-collapse:collapse; border:1.5px solid #000; text-align:center; font-size:12px;">
+              <thead>
+                <tr style="background:#f0f0f0;">
+                  <th style="border:1px solid #000; padding:4px;">م</th>
+                  <th style="border:1px solid #000; padding:4px;">الاسم</th>
+                  <th style="border:1px solid #000; padding:4px;">1م</th>
+                  <th style="border:1px solid #000; padding:4px;">ن</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    `;
+  });
+
+  if (html === '') {
+    container.innerHTML = '<p style="text-align:center;color:#7a8ba8;padding:20px;">لا يوجد طلاب في الصفوف المحددة.</p>';
+  } else {
+    container.innerHTML = html;
+  }
+}
+
+function printControlSheets() {
+  const container = document.getElementById('ctrlPreviewContainer');
+  if (!container || !container.innerHTML.trim() || container.innerHTML.includes('لا يوجد طلاب')) {
+    showToast('⚠️ لا توجد بيانات للطباعة', true); return;
+  }
+
+  const printHtml = container.innerHTML;
+  const win = window.open('', '_blank', 'width=1100,height=800');
+  if (!win) { showToast('⚠️ يرجى السماح بالنوافذ', true); return; }
+
+  win.document.write(`<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>كشوف الكنترول</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; background: #fff; padding: 10px; }
+  .toolbar { text-align: center; margin-bottom: 15px; padding: 10px; background: #f0f8ff; border-radius: 8px; position: sticky; top: 0; z-index: 100; }
+  .toolbar button { padding: 10px 25px; font-size: 15px; font-weight: bold; cursor: pointer; background: #1a4b7a; color: white; border: none; border-radius: 8px; margin: 0 5px; }
+  .toolbar button.close-btn { background: #6c757d; }
+  
+  .ctrl-page { box-shadow: none !important; margin: 0 auto !important; padding: 0 !important; }
+  
+  @media print {
+    .toolbar { display: none !important; }
+    body { padding: 0; }
+    @page { size: A4 landscape; margin: 0.5cm; } /* ورقة بالعرض */
+    .ctrl-page { page-break-after: always; }
+    table { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+  <button class="close-btn" onclick="window.close()">❌ إغلاق</button>
+</div>
+${printHtml}
+<script>setTimeout(function(){try{window.print()}catch(e){}},500);<\/script>
+</body>
+</html>`);
+  win.document.close();
+}
 function closeAddExamModal() {
   document.getElementById('addExamModal').classList.remove('show');
 }
