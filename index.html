@@ -1539,6 +1539,7 @@ body.light-mode #summarySchoolType {
 <!-- REPORTS -->
 <div class="page" id="page-reports">
 <h3 style="color:#4a9eff;">📄 التقارير الفصلية</h3>
+<button class="btn btn-warning" style="width:100%;margin-bottom:10px;font-size:15px;padding:12px;font-weight:bold;background:linear-gradient(145deg,#b8860b,#8b6508);" onclick="showPage('page-top-students')">🏆 قائمة الأوائل</button>
 <select id="reportYear" onchange="updateReportOptions()"></select>
 <select id="reportClass" onchange="updateReportOptions()">
 <option value="all">جميع الصفوف</option>
@@ -1589,6 +1590,44 @@ body.light-mode #summarySchoolType {
 <button class="btn btn-outline btn-sm" onclick="showPage('page-main')" style="margin-top:12px;">🔙 العودة</button>
 </div>
 
+<!-- TOP STUDENTS PAGE -->
+<div class="page" id="page-top-students">
+  <h3 style="color:#eab308;text-align:center;">🏆 قائمة الأوائل</h3>
+  
+  <div class="card" style="border-right-color:#eab308;">
+    <label style="font-size:14px;font-weight:bold;color:#eab308;display:block;margin-bottom:6px;">📅 العام الدراسي:</label>
+    <select id="tsYear" onchange="generateTopStudentsList()"></select>
+
+    <div style="margin-top:15px;display:flex;align-items:center;gap:8px;background:#2a1a00;padding:10px;border-radius:8px;border:1px solid #b8860b;">
+      <input type="checkbox" id="tsSelectAll" onchange="toggleTsClassSelect()" style="width:auto;transform:scale(1.2);cursor:pointer;">
+      <label for="tsSelectAll" style="font-weight:bold;color:#eab308;cursor:pointer;font-size:14px;">تحديد جميع الصفوف</label>
+    </div>
+
+    <label style="font-size:14px;font-weight:bold;color:#eab308;display:block;margin-top:15px;margin-bottom:6px;">🏫 الصف:</label>
+    <select id="tsClass" onchange="generateTopStudentsList()" disabled>
+      <option value="all">جميع الصفوف</option>
+      <option value="1">الصف الأول</option><option value="2">الصف الثاني</option>
+      <option value="3">الصف الثالث</option><option value="4">الصف الرابع</option>
+      <option value="5">الصف الخامس</option><option value="6">الصف السادس</option>
+      <option value="7">الصف السابع</option><option value="8">الصف الثامن</option>
+      <option value="9">الصف التاسع</option><option value="10">الصف العاشر</option>
+      <option value="11">الصف الحادي عشر</option><option value="12">الصف الثاني عشر</option>
+    </select>
+
+    <label style="font-size:14px;font-weight:bold;color:#eab308;display:block;margin-top:15px;margin-bottom:6px;">📚 الفصل:</label>
+    <select id="tsSemester" onchange="generateTopStudentsList()">
+      <option value="1">الفصل الدراسي الأول</option>
+      <option value="2">الفصل الدراسي الثاني</option>
+      <option value="3">النهائي (الفصلين معاً)</option>
+    </select>
+
+    <button class="btn btn-success" style="width:100%;margin-top:20px;padding:14px;font-size:16px;" onclick="printTopStudents()">🖨️ طباعة / حفظ PDF</button>
+  </div>
+
+  <div id="tsPreviewContainer" class="final-report-wrapper" style="margin-top:15px;background:#e0e0e0;padding:10px;min-height:200px;overflow-x:auto;"></div>
+
+  <button class="btn btn-outline btn-sm" onclick="showPage('page-reports')">🔙 العودة</button>
+</div>
 <!-- FINAL REPORT -->
 <div class="page" id="page-final-report">
 <h3 style="color:#4a9eff;">📋 الكشف النهائي للدرجات</h3>
@@ -3097,6 +3136,7 @@ function showPage(id) {
   if (typeof updateBottomNav === 'function') updateBottomNav(id);
   const s = appData.schoolSettings || getDefaultSettings();
   const titles = {
+     'page-top-students': '🏆 قائمة الأوائل',
     'page-login': '🏫 ' + s.name,
     'page-main': '🏫 ' + s.name,
     'page-settings': '⚙️ الإعدادات',
@@ -3135,6 +3175,7 @@ function showPage(id) {
 if (id === 'page-paper-records') { initPaperRecordsPage(); }
 if (id === 'page-exam-schedule') { initExamsPage(); renderExamScheduleTable(); }
   if (id === 'page-certificate') updateCertOptions();
+  if (id === 'page-top-students') initTopStudentsPage();
   if (id === 'page-certificate-print') { loadCPData(); const tplSel = document.getElementById('certTemplateSelect'); if (tplSel) tplSel.value = currentTemplate; updateTemplateStatus(); updateTplBadges(); updateCPStudents(); renderCPCanvas(); renderCPFieldsList(); }
   if (id === 'page-backup') updateBackupStats();
 }
@@ -4924,6 +4965,191 @@ function populateYears() {
 const select = document.getElementById(id);
 if (select) { const val = select.value; select.innerHTML = appData.years.map(y => `<option value="${y}">${y}</option>`).join(''); if (appData.years.includes(val)) select.value = val; }
 });
+}
+// ═══════════════════════════════════════════════════════════
+// 🏆 قائمة الأوائل (Top Students)
+// ═══════════════════════════════════════════════════════════
+function initTopStudentsPage() {
+  const yS = document.getElementById('tsYear');
+  if (yS.options.length === 0) {
+    yS.innerHTML = appData.years.map(y => `<option value="${y}">${y} (${getHijriYear(y)}هـ)</option>`).join('');
+    if (appData.years.includes('2026')) yS.value = '2026';
+  }
+  generateTopStudentsList();
+}
+
+function toggleTsClassSelect() {
+  const isAll = document.getElementById('tsSelectAll').checked;
+  const classSelect = document.getElementById('tsClass');
+  classSelect.disabled = !isAll;
+  if (!isAll) classSelect.value = 'all'; // تصفير الاختيار إذا تم إلغاء التأشير
+  generateTopStudentsList();
+}
+
+function generateTopStudentsList() {
+  const year = document.getElementById('tsYear').value;
+  const semester = document.getElementById('tsSemester').value;
+  const isAll = document.getElementById('tsSelectAll').checked;
+  const selectedClass = document.getElementById('tsClass').value;
+  
+  let classesToProcess = [];
+  if (isAll || selectedClass === 'all') {
+    classesToProcess = [1,2,3,4,5,6,7,8,9,10,11,12];
+  } else {
+    classesToProcess = [parseInt(selectedClass)];
+  }
+
+  const semLabel = semester === '1' ? 'الفصل الدراسي الأول' : (semester === '2' ? 'الفصل الدراسي الثاني' : 'النهائي');
+  const container = document.getElementById('tsPreviewContainer');
+  let html = '';
+
+  classesToProcess.forEach(classNum => {
+    const students = getStudentsByClass(classNum, year, 'all');
+    if (students.length === 0) return; // تخطي الصفوف الفارغة
+
+    // حساب المجاميع
+    const studentsWithTotals = students.map(st => {
+      let totalAll = 0;
+      const subjects = getSubjectsForClass(st.class);
+      if (semester === '1' || semester === '2') {
+        subjects.forEach(sub => { 
+          totalAll += getStudentGradeExam1(st.id, year, semester, st.class, sub) + getStudentGradeExam2(st.id, year, semester, st.class, sub); 
+        });
+      } else {
+        subjects.forEach(sub => { 
+          totalAll += getStudentGradeTotal(st.id, year, 1, st.class, sub) + getStudentGradeTotal(st.id, year, 2, st.class, sub); 
+        });
+      }
+      return { student: st, totalAll };
+    });
+
+    // ترتيب تنازلي
+    studentsWithTotals.sort((a, b) => b.totalAll - a.totalAll);
+
+    // استخراج العشرة الأوائل وترتيبهم بالحروف
+    const top10 = [];
+    let lastTotal = -1;
+    let lastRank = 0;
+    let rankCounter = 0;
+
+    for (let i = 0; i < studentsWithTotals.length; i++) {
+      if (i >= 10) break; // العشرة الأوائل فقط
+      const item = studentsWithTotals[i];
+      rankCounter++;
+      
+      if (item.totalAll === lastTotal) {
+         // نفس المجموع -> نفس الترتيب
+         top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(lastRank, true) });
+      } else {
+         // مجموع جديد
+         lastRank = rankCounter;
+         const tiedCount = studentsWithTotals.filter(x => x.totalAll === item.totalAll).length;
+         top10.push({ name: item.student.name, total: item.totalAll, rankLabel: getRankLabel(rankCounter, tiedCount > 1) });
+         lastTotal = item.totalAll;
+      }
+    }
+
+    if (top10.length === 0) return;
+
+    // بناء الجدول
+    let rowsHtml = '';
+    top10.forEach((st, idx) => {
+       rowsHtml += `<tr>
+         <td style="padding:5px; border:1px solid #000; text-align:center; font-weight:bold;">${idx + 1}</td>
+         <td style="padding:5px; border:1px solid #000; text-align:right; font-weight:bold;">${st.name}</td>
+         <td style="padding:5px; border:1px solid #000; text-align:center;">${st.total}</td>
+         <td style="padding:5px; border:1px solid #000; text-align:center; font-weight:bold;">${st.rankLabel}</td>
+       </tr>`;
+    });
+
+    const s = appData.schoolSettings || getDefaultSettings();
+    const yearText = `${year}/${parseInt(year)+1} م`;
+
+    // بناء شكل الورقة كما في الصورة
+    html += `
+      <div class="ts-print-page" style="background:#fff; padding:15px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.2); width:100%; min-width:400px; max-width:800px; margin-left:auto; margin-right:auto; page-break-after: always; font-family:'Cairo','Tajawal',sans-serif; color:#000;">
+        
+        <!-- الترويسة -->
+        <div style="text-align:center; margin-bottom:15px; font-weight:bold;">
+          <div style="font-family:'Traditional Arabic','Amiri',serif; font-size:16px; margin-bottom:5px;">بسم الله الرحمن الرحيم</div>
+          <div style="font-size:14px;">كشف بأسماء الطلاب الأوائل في ${semLabel} للعام ${yearText}</div>
+          <div style="font-size:14px; margin-top:2px;">${s.name || 'مدرسة /'}</div>
+        </div>
+
+        <!-- رأس الجدول -->
+        <div style="text-align:center; font-weight:bold; background:#e0e0e0; border:1px solid #000; border-bottom:none; padding:5px; font-size:14px;">
+          ${getClassLabelArabic(classNum)}
+        </div>
+
+        <!-- الجدول -->
+        <table style="width:100%; border-collapse:collapse; text-align:center; font-size:13px;">
+          <thead>
+            <tr style="background:#d0d0d0;">
+              <th style="padding:6px; border:1px solid #000; width:8%;">م</th>
+              <th style="padding:6px; border:1px solid #000; width:52%;">الاسم</th>
+              <th style="padding:6px; border:1px solid #000; width:20%;">المجموع</th>
+              <th style="padding:6px; border:1px solid #000; width:20%;">الترتيب</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+
+  if (html === '') {
+    container.innerHTML = '<p style="text-align:center;color:#7a8ba8;padding:20px;">لا توجد بيانات للصفوف المحددة.</p>';
+  } else {
+    container.innerHTML = html;
+  }
+}
+
+function printTopStudents() {
+  const container = document.getElementById('tsPreviewContainer');
+  if (!container || !container.innerHTML.trim() || container.innerHTML.includes('لا توجد بيانات')) {
+    showToast('⚠️ لا توجد بيانات للطباعة', true); return;
+  }
+
+  const printHtml = container.innerHTML;
+  const win = window.open('', '_blank', 'width=900,height=1100');
+  if (!win) { showToast('⚠️ يرجى السماح بالنوافذ', true); return; }
+
+  win.document.write(`<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>قائمة الأوائل</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; background: #fff; padding: 10px; }
+  .toolbar { text-align: center; margin-bottom: 15px; padding: 10px; background: #f0f8ff; border-radius: 8px; position: sticky; top: 0; z-index: 100; }
+  .toolbar button { padding: 10px 25px; font-size: 15px; font-weight: bold; cursor: pointer; background: #1a4b7a; color: white; border: none; border-radius: 8px; margin: 0 5px; }
+  .toolbar button.close-btn { background: #6c757d; }
+  
+  .ts-print-page { box-shadow: none !important; margin: 0 auto !important; padding: 0 !important; }
+  
+  @media print {
+    .toolbar { display: none !important; }
+    body { padding: 0; }
+    @page { size: A4 portrait; margin: 1cm; }
+    .ts-print-page { page-break-after: always; border: none; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+  <button class="close-btn" onclick="window.close()">❌ إغلاق</button>
+</div>
+${printHtml}
+<script>setTimeout(function(){try{window.print()}catch(e){}},500);<\/script>
+</body>
+</html>`);
+  win.document.close();
+  showToast('🖨️ جاهز للطباعة');
 }
 function updateReportOptions() { populateYears(); showReportResult(); }
 function showReportResult() {
