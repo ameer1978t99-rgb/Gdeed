@@ -10075,78 +10075,71 @@ function generateControlSheets() {
     container.innerHTML = '<p style="text-align:center;color:#7a8ba8;padding:20px;">اختر العام الدراسي</p>';
     return;
   }
-
+  
   let classesToProcess = [];
   if (classVal === 'all') {
-    classesToProcess = [1,2,3,4,5,6,7,8,9,10,11,12];
+    classesToProcess = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   } else {
     classesToProcess = [parseInt(classVal)];
   }
-
+  
   let html = '';
-
+  
   classesToProcess.forEach(classNum => {
-    // جلب الطلاب وترتيبهم أبجدياً
     let students = appData.students.filter(s => s.year == year && s.class == classNum);
-    if (students.length === 0) return; // تخطي الصفوف الفارغة
+    if (students.length === 0) return;
     
     students.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-
-    // توليد صفوف الجدول (نجعلها 25 صفاً كحد أدنى لملء الصفحة)
+    
     let rowsHtml = '';
     const maxRows = Math.max(25, students.length);
     for (let i = 0; i < maxRows; i++) {
       const st = students[i];
       const name = st ? st.name : '';
       rowsHtml += `<tr>
-        <td style="width:6%; text-align:center; padding:4px;">${i + 1}</td>
-        <td style="width:64%; text-align:right; padding:4px 8px; font-weight:bold;">${name}</td>
-        <td style="width:15%;"></td>
-        <td style="width:15%;"></td>
+        <td style="border:1px solid #000; text-align:center; padding:2px;">${i + 1}</td>
+        <td style="border:1px solid #000; text-align:right; padding:2px 6px; font-weight:bold;">${name}</td>
+        <td style="border:1px solid #000;"></td>
+        <td style="border:1px solid #000;"></td>
       </tr>`;
     }
-
+    
     const className = getClassLabelArabic(classNum);
-
-    // هيكل الورقة: جدولان متطابقان بجانب بعضهما
+    
+    // استخدام Grid بدلاً من Flex لضمان ثبات الطباعة
     html += `
       <div class="ctrl-page" style="background:#fff; padding:10px; margin-bottom:15px; width:100%; min-width:750px; box-shadow:0 2px 5px rgba(0,0,0,0.2); page-break-after: always; font-family:'Cairo','Tajawal',sans-serif; color:#000;">
-        
-        <div style="display:flex; justify-content:space-between; gap:10px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
           
           <!-- الجدول الأول (يمين) -->
-          <div style="flex:1;">
+          <div>
             <div style="text-align:center; font-weight:bold; font-size:14px; margin-bottom:5px;">${className}</div>
-            <table style="width:100%; border-collapse:collapse; border:1.5px solid #000; text-align:center; font-size:12px;">
+            <table style="width:100%; border-collapse:collapse; border:2px solid #000; text-align:center; font-size:12px; table-layout:fixed;">
               <thead>
                 <tr style="background:#f0f0f0;">
-                  <th style="border:1px solid #000; padding:4px;">م</th>
-                  <th style="border:1px solid #000; padding:4px;">الاسم</th>
-                  <th style="border:1px solid #000; padding:4px;">1م</th>
-                  <th style="border:1px solid #000; padding:4px;">ن</th>
+                  <th style="border:1px solid #000; padding:4px; width:10%;">م</th>
+                  <th style="border:1px solid #000; padding:4px; width:60%;">الاسم</th>
+                  <th style="border:1px solid #000; padding:4px; width:15%;">1م</th>
+                  <th style="border:1px solid #000; padding:4px; width:15%;">ن</th>
                 </tr>
               </thead>
-              <tbody>
-                ${rowsHtml}
-              </tbody>
+              <tbody>${rowsHtml}</tbody>
             </table>
           </div>
 
           <!-- الجدول الثاني (يسار) -->
-          <div style="flex:1;">
+          <div>
             <div style="text-align:center; font-weight:bold; font-size:14px; margin-bottom:5px;">${className}</div>
-            <table style="width:100%; border-collapse:collapse; border:1.5px solid #000; text-align:center; font-size:12px;">
+            <table style="width:100%; border-collapse:collapse; border:2px solid #000; text-align:center; font-size:12px; table-layout:fixed;">
               <thead>
                 <tr style="background:#f0f0f0;">
-                  <th style="border:1px solid #000; padding:4px;">م</th>
-                  <th style="border:1px solid #000; padding:4px;">الاسم</th>
-                  <th style="border:1px solid #000; padding:4px;">1م</th>
-                  <th style="border:1px solid #000; padding:4px;">ن</th>
+                  <th style="border:1px solid #000; padding:4px; width:10%;">م</th>
+                  <th style="border:1px solid #000; padding:4px; width:60%;">الاسم</th>
+                  <th style="border:1px solid #000; padding:4px; width:15%;">1م</th>
+                  <th style="border:1px solid #000; padding:4px; width:15%;">ن</th>
                 </tr>
               </thead>
-              <tbody>
-                ${rowsHtml}
-              </tbody>
+              <tbody>${rowsHtml}</tbody>
             </table>
           </div>
 
@@ -10154,7 +10147,7 @@ function generateControlSheets() {
       </div>
     `;
   });
-
+  
   if (html === '') {
     container.innerHTML = '<p style="text-align:center;color:#7a8ba8;padding:20px;">لا يوجد طلاب في الصفوف المحددة.</p>';
   } else {
@@ -10178,6 +10171,7 @@ function printControlSheets() {
 <meta charset="UTF-8">
 <title>كشوف الكنترول</title>
 <style>
+  /* إعدادات الشاشة */
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif; background: #fff; padding: 10px; }
   .toolbar { text-align: center; margin-bottom: 15px; padding: 10px; background: #f0f8ff; border-radius: 8px; position: sticky; top: 0; z-index: 100; }
@@ -10185,13 +10179,27 @@ function printControlSheets() {
   .toolbar button.close-btn { background: #6c757d; }
   
   .ctrl-page { box-shadow: none !important; margin: 0 auto !important; padding: 0 !important; }
-  
+
+  /* إعدادات الطباعة الصارمة */
   @media print {
     .toolbar { display: none !important; }
-    body { padding: 0; }
-    @page { size: A4 landscape; margin: 0.5cm; } /* ورقة بالعرض */
-    .ctrl-page { page-break-after: always; }
-    table { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { padding: 0; margin: 0; background: #fff; }
+    @page { size: A4 landscape; margin: 5mm; }
+    
+    /* إجبار المتصفح على طباعة الألوان والحدود بدقة */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    
+    /* ضمان أن كل صف يطبع في ورقة واحدة ولا ينقسم */
+    .ctrl-page { 
+      page-break-after: always; 
+      page-break-inside: avoid; 
+      margin-bottom: 0 !important; 
+    }
+    .ctrl-page:last-child { page-break-after: auto; }
+    
+    /* إجبار حدود الجدول على الظهور بوضوح */
+    table { border: 1.5pt solid #000 !important; }
+    th, td { border: 0.5pt solid #000 !important; }
   }
 </style>
 </head>
