@@ -2371,64 +2371,6 @@ body.light-mode #summarySchoolType {
 </div>
 </div>
 </div>
-<!-- ADD STUDENT MODAL (VOICE ENABLED) -->
-<div class="modal-overlay" id="addStudentModal">
-  <div class="modal-box" style="max-width:500px;">
-    <div class="modal-title">➕ إضافة طالب جديد</div>
-    
-    <div style="display:flex;justify-content:center;margin-bottom:15px;">
-      <button id="voiceWizardBtn" class="btn btn-purple" style="width:100%;padding:12px;font-size:16px;font-weight:bold;" onclick="startAddStudentVoiceWizard()">🎤 بدء الإدخال الصوتي (تلقائي)</button>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr;gap:10px;">
-      <div>
-        <label class="modal-label">اسم الطالب <span style="color:#f87171;">*</span></label>
-        <input type="text" id="addStuName" placeholder="اسم الطالب..." />
-      </div>
-      
-      <div>
-        <label class="modal-label">اللقب (النسب)</label>
-        <input type="text" id="addStuSurname" placeholder="اللقب..." />
-      </div>
-
-      <div>
-        <label class="modal-label">الاسم بالإنجليزية</label>
-        <input type="text" id="addStuNameEn" placeholder="English Name..." style="direction:ltr;text-align:left;" />
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <label class="modal-label">الجنس</label>
-          <select id="addStuGender">
-            <option value="">-- اختر --</option>
-            <option value="ذكر">ذكر</option>
-            <option value="أنثى">أنثى</option>
-          </select>
-        </div>
-        <div>
-          <label class="modal-label">الجنسية</label>
-          <input type="text" id="addStuNationality" value="يمني" />
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div>
-          <label class="modal-label">تاريخ الميلاد</label>
-          <input type="date" id="addStuBirth" />
-        </div>
-        <div>
-          <label class="modal-label">محل الميلاد</label>
-          <input type="text" id="addStuBirthPlace" placeholder="محل الميلاد..." />
-        </div>
-      </div>
-    </div>
-
-    <div class="flex" style="margin-top:20px;gap:8px;">
-      <button class="btn btn-success flex-1" onclick="saveNewStudent()">💾 حفظ الطالب</button>
-      <button class="btn btn-outline flex-1" onclick="closeAddStudentModal()">❌ إلغاء</button>
-    </div>
-  </div>
-</div>
 
 <!-- IMPORT GRADES MODAL -->
 <div class="modal-overlay" id="importGradesModal">
@@ -4019,173 +3961,90 @@ renderStudentsList();
 showToast('🔄 تم إعادة تعيين الفلاتر');
 }
 function addStudent() {
-  // فتح النافذة الجديدة بدلاً من الـ prompt
-  document.getElementById('addStuName').value = '';
-  document.getElementById('addStuSurname').value = '';
-  document.getElementById('addStuNameEn').value = '';
-  document.getElementById('addStuGender').value = '';
-  document.getElementById('addStuNationality').value = 'يمني';
-  document.getElementById('addStuBirth').value = '';
-  document.getElementById('addStuBirthPlace').value = '';
-  
-  const btn = document.getElementById('voiceWizardBtn');
-  btn.innerHTML = '🎤 بدء الإدخال الصوتي (تلقائي)';
-  btn.style.background = 'linear-gradient(145deg,#6a1b9a,#4a148c)';
-  
-  document.getElementById('addStudentModal').classList.add('show');
-}
+const year = document.getElementById('studentYear').value;
+const classNum = document.getElementById('targetClass').value;
+const section = document.getElementById('targetSection').value;
+const name = prompt('👤 اسم الطالب:');
+if (!name || !name.trim()) return;
+let gender = prompt('الجنس:\n1 - ذكر\n2 - أنثى', '1');
+gender = gender === '1' ? 'ذكر' : (gender === '2' ? 'أنثى' : '');
+const birthPlace = prompt('🏠 محل الميلاد (اختياري):', '') || '';
+const surname = prompt('👨‍👦 اللقب (اختياري):', '') || '';
+const nameEn = prompt('🆎 الاسم بالإنجليزية (اختياري):', '') || '';
+appData.students.push({ id: appData.nextStudentId++, name: name.trim(), surname: surname.trim(), nameEn: nameEn.trim(), class: parseInt(classNum), year: year, birth: '', birthPlace: birthPlace, gender: gender, section: section });
+saveDataSync();
+const importedYears = new Set();
+(appData.students || []).forEach(st => {
+  if (String(st.year) === String(year)) importedYears.add(st.year); // تم استبدال selectedYear بـ year
 
-function closeAddStudentModal() {
-  document.getElementById('addStudentModal').classList.remove('show');
-  if (window.addStuRec) { try { window.addStuRec.stop(); } catch (e) {} }
+});
+importedYears.forEach(y => recalculateSchoolNumbers(y));
+renderStudentsList();
 }
-
-function saveNewStudent() {
-  const name = document.getElementById('addStuName').value.trim();
-  if (!name) { showToast('⚠️ اسم الطالب مطلوب', true); return; }
+function deleteStudent(id) {
+  if (!confirm('حذف هذا الطالب؟')) return;
+  const deletedStudent = appData.students.find(s => s.id === id);
+  const deletedYear = deletedStudent ? deletedStudent.year : null;
+  appData.students = appData.students.filter(s => s.id !== id);
+  Object.keys(appData.grades).forEach(key => { delete appData.grades[key][id]; });
+  if (deletedYear) recalculateSchoolNumbers(deletedYear);
+  saveDataSync();
+  renderStudentsList();
+  showToast('🗑️ تم الحذف');
+}
+function openEditModal(id) {
+const student = appData.students.find(s => s.id === id);
+if (!student) return;
+editingStudentId = id;
+document.getElementById('editName').value = student.name;
+document.getElementById('editSurname').value = student.surname || '';
+document.getElementById('editNameEn').value = student.nameEn || '';
+document.getElementById('editGender').value = student.gender || '';
+document.getElementById('editClass').value = student.class;
+document.getElementById('editSection').value = student.section || DEFAULT_SECTION;
+document.getElementById('editSchoolNumber').value = student.schoolNumber || '';
+document.getElementById('editSeatNumber').value = student.seatNumber || '';
+document.getElementById('editNationality').value = student.nationality || 'يمني';
+const ySelect = document.getElementById('editYear');
+ySelect.innerHTML = appData.years.map(y => `<option value="${y}">${y} (${getHijriYear(y)}هـ)</option>`).join('');
+ySelect.value = student.year || '2025';
+document.getElementById('editBirth').value = student.birth || '';
+document.getElementById('editBirthPlace').value = student.birthPlace || '';
+document.getElementById('editModal').classList.add('show');
+}
+function closeEditModal() { document.getElementById('editModal').classList.remove('show'); editingStudentId = null; }
+function saveEditStudent() {
+  if (!editingStudentId) return;
+  const student = appData.students.find(s => s.id === editingStudentId);
+  if (!student) return;
   
-  const year = document.getElementById('studentYear').value;
-  const classNum = document.getElementById('targetClass').value;
-  const section = document.getElementById('targetSection').value;
+  const oldYear = student.year;
   
-  appData.students.push({
-    id: appData.nextStudentId++,
-    name: name,
-    surname: document.getElementById('addStuSurname').value.trim(),
-    nameEn: document.getElementById('addStuNameEn').value.trim(),
-    class: parseInt(classNum),
-    year: year,
-    birth: document.getElementById('addStuBirth').value,
-    birthPlace: document.getElementById('addStuBirthPlace').value.trim(),
-    gender: document.getElementById('addStuGender').value,
-    nationality: document.getElementById('addStuNationality').value.trim() || 'يمني',
-    section: section
-  });
+  const name = document.getElementById('editName').value.trim();
+  if (!name) { showToast('⚠️ اسم الطالب مطلوب'); return; }
+  
+  student.name = name;
+  student.surname = document.getElementById('editSurname').value.trim();
+  student.nameEn = document.getElementById('editNameEn').value.trim();
+  // ⚠️ لا نعدل schoolNumber يدوياً — يُحسب تلقائياً
+  student.seatNumber = document.getElementById('editSeatNumber').value.trim();
+  student.nationality = document.getElementById('editNationality').value.trim() || 'يمني';
+  student.gender = document.getElementById('editGender').value;
+  student.class = parseInt(document.getElementById('editClass').value);
+  student.section = document.getElementById('editSection').value;
+  student.year = document.getElementById('editYear').value;
+  student.birth = document.getElementById('editBirth').value;
+  student.birthPlace = document.getElementById('editBirthPlace').value.trim();
   
   saveDataSync();
-  recalculateSchoolNumbers(year);
+  recalculateSchoolNumbers(student.year);
+  if (oldYear && String(oldYear) !== String(student.year)) recalculateSchoolNumbers(oldYear);
+  
+  closeEditModal();
   renderStudentsList();
-  closeAddStudentModal();
-  showToast('✅ تم إضافة الطالب بنجاح');
+  showToast('✅ تم التحديث');
 }
-// ═══════════════════════════════════════════════════════════
-// 🎤 الإدخال الصوتي المتسلسل لإضافة طالب (Wizard)
-// ═══════════════════════════════════════════════════════════
-let wizardStep = 0;
-let wizardRec = null;
-
-const wizardSteps = [
-  { id: 'addStuName', lang: 'ar-SA', prompt: 'اسم الطالب', type: 'text' },
-  { id: 'addStuSurname', lang: 'ar-SA', prompt: 'اللقب (النسب)', type: 'text' },
-  { id: 'addStuGender', lang: 'ar-SA', prompt: 'الجنس (ذكر أم أنثى)', type: 'select' },
-  { id: 'addStuBirthPlace', lang: 'ar-SA', prompt: 'محل الميلاد', type: 'text' },
-  { id: 'addStuNameEn', lang: 'en-US', prompt: 'الاسم بالإنجليزية', type: 'text' }
-];
-
-function startAddStudentVoiceWizard() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { alert('⚠️ الإدخال الصوتي غير مدعوم في هذا المتصفح'); return; }
-  
-  const btn = document.getElementById('voiceWizardBtn');
-  
-  // إذا كان يعمل، نوقفه
-  if (wizardRec) {
-    try { wizardRec.stop(); } catch (e) {}
-    wizardRec = null;
-    btn.innerHTML = '🎤 بدء الإدخال الصوتي (تلقائي)';
-    btn.style.background = 'linear-gradient(145deg,#6a1b9a,#4a148c)';
-    return;
-  }
-  
-  wizardStep = 0;
-  btn.innerHTML = '⏹️ إيقاف الإدخال الصوتي';
-  btn.style.background = 'linear-gradient(145deg,#b33636,#7a1a1a)';
-  
-  processWizardStep();
-}
-
-function processWizardStep() {
-  if (wizardStep >= wizardSteps.length) {
-    // انتهت جميع الخطوات
-    playVoiceSuccess();
-    showToast('✅ تم إدخال جميع البيانات صوتياً');
-    const btn = document.getElementById('voiceWizardBtn');
-    btn.innerHTML = '🎤 بدء الإدخال الصوتي (تلقائي)';
-    btn.style.background = 'linear-gradient(145deg,#6a1b9a,#4a148c)';
-    wizardRec = null;
-    return;
-  }
-  
-  const step = wizardSteps[wizardStep];
-  const input = document.getElementById(step.id);
-  
-  // تمييز الخانة الحالية
-  document.querySelectorAll('#addStudentModal input, #addStudentModal select').forEach(el => el.style.borderColor = '');
-  input.style.borderColor = '#4ade80';
-  input.style.boxShadow = '0 0 0 3px rgba(74,222,128,0.3)';
-  
-  // إظهار تلميح للمستخدم
-  input.placeholder = `🎤 قل ${step.prompt}...`;
-  showToast(`🎤 قل: ${step.prompt}`);
-  
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  wizardRec = new SR();
-  wizardRec.lang = step.lang;
-  wizardRec.interimResults = false;
-  wizardRec.maxAlternatives = 1;
-  
-  wizardRec.onresult = (event) => {
-    const text = event.results[0][0].transcript.trim();
-    
-    if (step.type === 'select') {
-      // معالجة خاصة للجنس
-      if (text.includes('ذكر') || text.includes('ولد')) {
-        input.value = 'ذكر';
-      } else if (text.includes('أنثى') || text.includes('بنت') || text.includes('انثى')) {
-        input.value = 'أنثى';
-      } else {
-        playVoiceError();
-        input.placeholder = 'لم أفهم، أعد المحاولة...';
-        setTimeout(() => { startAddStudentVoiceWizard(); }, 1000); // إعادة المحاولة
-        return;
-      }
-    } else {
-      input.value = text;
-    }
-    
-    input.style.borderColor = '#4ade80';
-    playVoiceSuccess();
-    
-    // الانتقال للخطوة التالية بعد نصف ثانية
-    wizardStep++;
-    setTimeout(processWizardStep, 500);
-  };
-  
-  wizardRec.onerror = (event) => {
-    if (event.error === 'no-speech') {
-      // لم يتحدث، نعيد المحاولة
-      wizardRec.stop();
-      setTimeout(processWizardStep, 500);
-    } else {
-      playVoiceError();
-      showToast('⚠️ خطأ في الاستماع، أعد المحاولة', true);
-      startAddStudentVoiceWizard(); // إيقاف
-    }
-  };
-  
-  wizardRec.onend = () => {
-    // إذا انتهى الاستماع دون نتيجة، نتأكد من عدم حدوث تعليق
-    if (wizardStep < wizardSteps.length && input.style.borderColor !== 'rgb(74, 222, 128)') {
-      // سيقوم onresult بمعالجة الانتقال، لذا لا نفعل شيئاً هنا
-    }
-  };
-  
-  try {
-    wizardRec.start();
-  } catch (e) {
-    console.error(e);
-  }
-}
+document.getElementById('editModal').addEventListener('click', (e) => { if (e.target.id === 'editModal') closeEditModal(); });
 
 // ═══════════════════════════════════════════════════════════
 // 📄 تنزيل نموذج Excel فارغ للاستيراد
