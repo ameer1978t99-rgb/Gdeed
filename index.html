@@ -1855,9 +1855,12 @@ body.light-mode #summarySchoolType {
 <option value="">-- اختر البيان --</option>
 <optgroup label="🏫 حقول عامة"><option value="schoolName">اسم المدرسة</option></optgroup>
 <optgroup label="✍️ أسماء الموقّعين">
-<option value="principalName">اسم مدير المدرسة</option>
-<option value="educationDirectorName">اسم مدير إدارة التربية والتعليم</option>
-<option value="officeDirectorName">اسم مدير مكتب التربية بالمحافظة</option>
+<optgroup label="✍️ أسماء الموقّعين">
+  <option value="principalName">اسم مدير المدرسة</option>
+  <option value="educationDirectorName">اسم مدير إدارة التربية والتعليم</option>
+  <option value="officeDirectorName">اسم مدير مكتب التربية بالمحافظة</option>
+  <option value="examDirectorName">رئيس قسم الامتحانات</option>
+</optgroup>
 </optgroup>
 <optgroup label="👤 البيانات الشخصية">
 
@@ -6712,8 +6715,9 @@ function saveCPPositions() { saveCPData(); showToast('✅ تم الحفظ'); }
 function clearCPPositions() { if (!confirm('حذف جميع المواقع؟')) return; cpPositions = {}; cpSelectedField = null; saveCPData(); renderCPMarkers(); renderCPFieldsList(); updateTemplateStatus(); updateTplBadges(); showToast('🗑️ تم'); }
 function getFieldLabel(field) {
 const labels = { principalName: 'اسم مدير المدرسة',
-principalName: 'رئيس قسم الاختبارات',
-educationDirectorName: 'اسم مدير إدارة التربية', officeDirectorName: 'اسم مدير مكتب التربية', studentName: 'اسم الطالب', studentSurname: 'اللقب (النسب)', studentGender: 'الجنس', studentNationality: 'الجنسية', studentGovernorate: 'المحافظة', studentDistrict: 'المديرية', studentClass: 'الصف', studentSection: 'الشعبة', studentId: 'رقم الطالب', studentBirth: 'تاريخ الميلاد', academicYear: 'العام الدراسي', issueDate: 'تاريخ الإصدار', result: 'النتيجة', totalAll: 'المجموع الكلي (رقماً + كتابة)', totalAll_number: 'المجموع الكلي (رقماً فقط)', totalAll_text: 'المجموع الكلي (كتابة فقط)', percentage: 'النسبة', grade: 'التقدير', schoolName: 'اسم المدرسة', studentBirthPlace: 'محل الميلاد', studentRank: 'الترتيب' };
+educationDirectorName: 'اسم مدير إدارة التربية',
+examDirectorName: 'رئيس قسم الامتحانات',
+officeDirectorName: 'اسم مدير مكتب التربية', studentName: 'اسم الطالب', studentSurname: 'اللقب (النسب)', studentGender: 'الجنس', studentNationality: 'الجنسية', studentGovernorate: 'المحافظة', studentDistrict: 'المديرية', studentClass: 'الصف', studentSection: 'الشعبة', studentId: 'رقم الطالب', studentBirth: 'تاريخ الميلاد', academicYear: 'العام الدراسي', issueDate: 'تاريخ الإصدار', result: 'النتيجة', totalAll: 'المجموع الكلي (رقماً + كتابة)', totalAll_number: 'المجموع الكلي (رقماً فقط)', totalAll_text: 'المجموع الكلي (كتابة فقط)', percentage: 'النسبة', grade: 'التقدير', schoolName: 'اسم المدرسة', studentBirthPlace: 'محل الميلاد', studentRank: 'الترتيب' };
 if (labels[field]) return labels[field];
 const parts = field.split('_');
 if (parts.length === 2 && parts[1] === '20pct') { const sn = Object.keys(SUBJECT_KEYS).find(k => SUBJECT_KEYS[k] === parts[0]); return `${sn || parts[0]} - 20% من المجموع`; }
@@ -6740,6 +6744,7 @@ case 'schoolName': return settings.name;
 case 'principalName': return settings.principalName || '';
 case 'educationDirectorName': return settings.educationDirectorName || '';
 case 'officeDirectorName': return settings.officeDirectorName || '';
+case 'examDirectorName': return settings.examDirectorName || '';
 case 'studentName': return student.name;
 case 'studentSurname': return student.surname || '';
 case 'studentGender': return student.gender || '';
