@@ -6451,11 +6451,11 @@ function generateCertificate() {
             <div style="text-align:center;flex:1;"><p style="margin:2px;font-weight:bold;">مدير المدرسة</p>${s.principalName ? `<p style="margin:2px;color:#1a4b7a;font-weight:bold;font-size:11px;">${s.principalName}</p>` : ''}<p style="margin:18px 2px 2px;color:#999;">____________</p></div>
             <div style="text-align:center;flex:1;"><p style="margin:2px;font-weight:bold;">ولي الأمر</p><p style="margin:18px 2px 2px;color:#999;">____________</p></div>
         </div>
-        <div style="text-align:center;font-size:10px;color:#999;margin-top:10px;border-top:1px dashed #ccc;padding-top:5px;">تم إصدار هذه الشهادة بواسطة نظام الرصد - ${new Date().toLocaleDateString('ar-EG')}</div>
+        <div style="text-align:center;font-size:10px;color:#999;margin-top:10px;border-top:1px dashed #ccc;padding-top:5px;">تم إصدار هذه الشهادة بواسطة نظام الرصد الاكتروني - ${new Date().toLocaleDateString('ar-EG')}</div>
     </div>`;
 }
 function shareCertificate() {
-const choice = prompt('اختر:\n\n1 - PDF\n2 - نسخ النص\n\nالرقم:', '1');
+const choice = prompt('اختر:\n\n1 - PDF\n2 - نسخ النص\n\nالرقم:', '1');   
 if (choice === '1') printCertificate();
 else if (choice === '2') {
 const year = document.getElementById('certYear').value;
@@ -6711,7 +6711,9 @@ function deleteCPField(field) { delete cpPositions[field]; if (cpSelectedField =
 function saveCPPositions() { saveCPData(); showToast('✅ تم الحفظ'); }
 function clearCPPositions() { if (!confirm('حذف جميع المواقع؟')) return; cpPositions = {}; cpSelectedField = null; saveCPData(); renderCPMarkers(); renderCPFieldsList(); updateTemplateStatus(); updateTplBadges(); showToast('🗑️ تم'); }
 function getFieldLabel(field) {
-const labels = { principalName: 'اسم مدير المدرسة', educationDirectorName: 'اسم مدير إدارة التربية', officeDirectorName: 'اسم مدير مكتب التربية', studentName: 'اسم الطالب', studentSurname: 'اللقب (النسب)', studentGender: 'الجنس', studentNationality: 'الجنسية', studentGovernorate: 'المحافظة', studentDistrict: 'المديرية', studentClass: 'الصف', studentSection: 'الشعبة', studentId: 'رقم الطالب', studentBirth: 'تاريخ الميلاد', academicYear: 'العام الدراسي', issueDate: 'تاريخ الإصدار', result: 'النتيجة', totalAll: 'المجموع الكلي (رقماً + كتابة)', totalAll_number: 'المجموع الكلي (رقماً فقط)', totalAll_text: 'المجموع الكلي (كتابة فقط)', percentage: 'النسبة', grade: 'التقدير', schoolName: 'اسم المدرسة', studentBirthPlace: 'محل الميلاد', studentRank: 'الترتيب' };
+const labels = { principalName: 'اسم مدير المدرسة',
+principalName: 'رئيس قسم الاختبارات',
+educationDirectorName: 'اسم مدير إدارة التربية', officeDirectorName: 'اسم مدير مكتب التربية', studentName: 'اسم الطالب', studentSurname: 'اللقب (النسب)', studentGender: 'الجنس', studentNationality: 'الجنسية', studentGovernorate: 'المحافظة', studentDistrict: 'المديرية', studentClass: 'الصف', studentSection: 'الشعبة', studentId: 'رقم الطالب', studentBirth: 'تاريخ الميلاد', academicYear: 'العام الدراسي', issueDate: 'تاريخ الإصدار', result: 'النتيجة', totalAll: 'المجموع الكلي (رقماً + كتابة)', totalAll_number: 'المجموع الكلي (رقماً فقط)', totalAll_text: 'المجموع الكلي (كتابة فقط)', percentage: 'النسبة', grade: 'التقدير', schoolName: 'اسم المدرسة', studentBirthPlace: 'محل الميلاد', studentRank: 'الترتيب' };
 if (labels[field]) return labels[field];
 const parts = field.split('_');
 if (parts.length === 2 && parts[1] === '20pct') { const sn = Object.keys(SUBJECT_KEYS).find(k => SUBJECT_KEYS[k] === parts[0]); return `${sn || parts[0]} - 20% من المجموع`; }
