@@ -9730,25 +9730,44 @@ function buildPrimaryTable(students, year, classNum, mode, startIndex) {
   const s = appData.schoolSettings || getDefaultSettings();
   const maxPerSubject = mode === 'sem' ? 50 : 100;
   
-  // ✅ رأس الجدول بصفّين (مع "تاريخ الميلاد" فوق)
+  // ✅ حساب الدرجة العظمى للمجموع (عدد المواد × الدرجة العظمى)
+  const maxTotalSubjects = subjects.length * maxPerSubject;
+  
+  // ✅ رأس الجدول بصفّين
   let h1 = '<tr>';
   h1 += '<th rowspan="2">م</th>';
   h1 += '<th rowspan="2">اسم الطالب</th>';
   h1 += '<th rowspan="2">الجنس</th>';
   h1 += '<th rowspan="2">المديرية</th>';
   h1 += '<th rowspan="2">المحافظة</th>';
-  h1 += '<th colspan="3">تاريخ الميلاد</th>';   // ← ✅ خلية جديدة
-  subjects.forEach(sub => { h1 += `<th class="v-head" rowspan="2"><span>${sub}</span></th>`; });
-  h1 += '<th rowspan="2">المجموع<br>الكلي</th>';
+  h1 += '<th colspan="3">تاريخ الميلاد</th>';
+  
+  // المواد
+  subjects.forEach(sub => { 
+    h1 += `<th class="v-head" rowspan="1" style="height:80px;"><span>${sub}</span></th>`; 
+  });
+  
+  // ✅ تعديل المجموع ليصبح صفين بدلاً من دمجها
+  h1 += '<th rowspan="1" style="height:80px; vertical-align:middle; font-weight:bold;">المجموع<br>الكلي</th>';
+  
+  // النتيجة والنسبة نتركهما مدموجين (صفّين)
   h1 += '<th rowspan="2">النتيجة</th>';
   h1 += '<th rowspan="2">النسبة</th>';
   h1 += '</tr>';
   
-  // الصف الثاني: اليوم، الشهر، السنة
+  // الصف الثاني: اليوم، الشهر، السنة + الدرجة العظمى + مجموع الدرجات العظمى
   let h2 = '<tr>';
   h2 += '<th>اليوم</th>';
   h2 += '<th>الشهر</th>';
   h2 += '<th>السنة</th>';
+  
+  subjects.forEach(sub => {
+    h2 += `<th style="font-size:11px; font-weight:bold; background:#1a3a5c; color:#fff; height:30px; vertical-align:middle;">${maxPerSubject}</th>`;
+  });
+  
+  // ✅ إضافة خلية المجموع التلقائي تحت عمود المجموع الكلي
+  h2 += `<th style="font-size:11px; font-weight:bold; background:#1a3a5c; color:#fff; height:30px; vertical-align:middle;">${maxTotalSubjects}</th>`;
+  
   h2 += '</tr>';
   
   let body = '';
@@ -9774,8 +9793,9 @@ function buildPrimaryTable(students, year, classNum, mode, startIndex) {
       totalAll += total;
       cells += `<td style="font-weight:bold;">${total || ''}</td>`;
     });
-    const maxTotal = subjects.length * maxPerSubject;
-    const pct = maxTotal > 0 ? ((totalAll / maxTotal) * 100).toFixed(1) : 0;
+    
+    const pct = maxTotalSubjects > 0 ? ((totalAll / maxTotalSubjects) * 100).toFixed(1) : 0;
+    
     body += `<tr>
       <td>${rowNum}</td>
       <td style="text-align:right;padding:3px 8px;font-weight:bold;">${st.name}</td>
@@ -9790,7 +9810,6 @@ function buildPrimaryTable(students, year, classNum, mode, startIndex) {
     </tr>`;
   });
   
-  // ✅ عرض الصفّين في thead
   return `<table class="pr-table"><thead>${h1}${h2}</thead><tbody>${body}</tbody></table>`;
 }
 function buildPrimaryReportPages(students, year, classNum, section, reportNo, period, mode) {
