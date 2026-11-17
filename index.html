@@ -8397,10 +8397,11 @@ function renderSummaryTable(rows, years, SUBJ) {
       <col style="width:28px;">
       <col style="width:28px;">
       <col style="width:35px;">
-      ${'<col style="width:24px;">'.repeat(SUBJ.length * 5)}
-      <col style="width:50px;">
-      <col style="width:50px;">
-    </colgroup>`;
+      $ { '<col style="width:24px;">'.repeat(SUBJ.length * 5) }
+  <col style="width:50px;"> <!-- المجموع الكلي -->
+  <col style="width:50px;"> <!-- المعدل (جديد) -->
+  <col style="width:50px;"> <!-- النتيجة -->
+</colgroup>`;
     let head1 = '<tr>';
     head1 += '<th rowspan="2">الرقم<br>المدرسي</th>';
     head1 += '<th rowspan="2">اسم الطالب رباعياً</th>';
@@ -8411,7 +8412,8 @@ function renderSummaryTable(rows, years, SUBJ) {
     head1 += '<th colspan="3">تاريخ الميلاد</th>';
     SUBJ.forEach(sub => { head1 += `<th colspan="5">${sub}</th>`; });
     head1 += '<th rowspan="2">المجموع<br>الكلي</th>';
-    head1 += '<th rowspan="2">النتيجة<br>النهائية</th>';
+head1 += '<th rowspan="2">المعدل</th>'; // ✅ العمود الجديد
+head1 += '<th rowspan="2">النتيجة<br>النهائية</th>';
     head1 += '</tr>';
     let head2 = '<tr>';
     head2 += '<th class="vertical"><span>اليوم</span></th>';
@@ -8450,7 +8452,12 @@ function renderSummaryTable(rows, years, SUBJ) {
         body += `<td style="background:#f0f8ff;">${d.avg || ''}</td>`;
       });
       body += `<td style="background:#fff8e1;font-weight:bold;">${r.grandTotal || ''}</td>`;
-      body += `<td class="${r.result==='ناجح'?'result-pass':'result-fail'}">${r.result}</td>`;
+
+// ✅ حساب المعدل (المجموع تقسيم عدد المواد)
+const avgTotal = r.grandTotal ? (r.grandTotal / SUBJ.length).toFixed(1) : '0.0';
+body += `<td style="background:#e3edfb;font-weight:bold;color:#1a4b7a;">${avgTotal}</td>`;
+
+body += `<td class="${r.result==='ناجح'?'result-pass':'result-fail'}">${r.result}</td>`;
       body += `</tr>`;
     });
     
@@ -8664,7 +8671,7 @@ async function exportSpecialSummary() {
   let nCols = 6 + 3; // م + الاسم + رقم الجلوس + الجنس + الجنسية + محل الميلاد + (يوم/شهر/سنة)
   if (!is9) nCols += 1 + 12 + 2; // الديانة + (4 بيانات × 3 شهادات) + (رقم الجلوس + العام)
   nCols += SUBJ.length * 5; // كل مادة: 3 سنوات + المجموع + المعدل
-  nCols += 2; // المجموع الكلي + النتيجة
+  nCols += 3; // المجموع الكلي + المعدل + النتيجة
   
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(is9 ? 'خلاصة تاسع' : 'خلاصة ثالث ثانوي', {
@@ -8827,10 +8834,13 @@ async function exportSpecialSummary() {
   
   // الإجمالي والنتيجة
   ws.mergeCells(hRow1, c1, hRow2, c1);
-  xlSetCell(ws, ws.getCell(hRow1, c1).address, 'المجموع الكلي', {size: 9, bold: true, color: 'FFFFFFFF', fill: XL_ARGB.headerBlue});
-  c1++;
-  ws.mergeCells(hRow1, c1, hRow2, c1);
-  xlSetCell(ws, ws.getCell(hRow1, c1).address, 'النتيجة النهائية', {size: 9, bold: true, color: 'FFFFFFFF', fill: XL_ARGB.headerBlue});
+xlSetCell(ws, ws.getCell(hRow1, c1).address, 'المجموع الكلي', { size: 9, bold: true, color: 'FFFFFFFF', fill: XL_ARGB.headerBlue });
+c1++;
+ws.mergeCells(hRow1, c1, hRow2, c1);
+xlSetCell(ws, ws.getCell(hRow1, c1).address, 'المعدل', { size: 9, bold: true, color: 'FFFFFFFF', fill: XL_ARGB.headerBlue });
+c1++;
+ws.mergeCells(hRow1, c1, hRow2, c1);
+xlSetCell(ws, ws.getCell(hRow1, c1).address, 'النتيجة النهائية', { size: 9, bold: true, color: 'FFFFFFFF', fill: XL_ARGB.headerBlue });
   
   // ========== صفوف الطلاب ==========
   let dataRow = hRow2 + 1;
@@ -8893,9 +8903,12 @@ async function exportSpecialSummary() {
       c += 5;
     });
     
-    xlSetCell(ws, ws.getCell(dataRow, c).address, r.grandTotal || 0, {size: 9, bold: true, fill: XL_ARGB.yellow});
-    c++;
-    const passColor = r.result === 'ناجح' ? XL_ARGB.green : XL_ARGB.red;
+    xlSetCell(ws, ws.getCell(dataRow, c).address, r.grandTotal || 0, { size: 9, bold: true, fill: XL_ARGB.yellow });
+c++;
+const avgTotal = r.grandTotal ? (r.grandTotal / SUBJ.length).toFixed(1) : '0.0';
+xlSetCell(ws, ws.getCell(dataRow, c).address, avgTotal, { size: 9, bold: true, fill: XL_ARGB.primaryLight, color: 'FF1A4B7A' });
+c++;
+const passColor = r.result === 'ناجح' ? XL_ARGB.green : XL_ARGB.red;
     const passFill = r.result === 'ناجح' ? 'FFE3F5E9' : 'FFFDE8E8';
     xlSetCell(ws, ws.getCell(dataRow, c).address, r.result || '', {size: 9, bold: true, color: passColor, fill: passFill});
     dataRow++;
